@@ -26,13 +26,19 @@ const JSON_HEADERS = { "Content-Type": "application/json" };
 const getMine = () => {
   try {
     const items = JSON.parse(localStorage.getItem(MINE_KEY)) || [];
-    return items.filter((item) => item && typeof item.id === "string" && typeof item.token === "string");
+    return items.filter(
+      (item) =>
+        item && typeof item.id === "string" && typeof item.token === "string",
+    );
   } catch {
     return [];
   }
 };
 const addMine = (report) =>
-  localStorage.setItem(MINE_KEY, JSON.stringify([...getMine(), { id: report.id, token: report.token }]));
+  localStorage.setItem(
+    MINE_KEY,
+    JSON.stringify([...getMine(), { id: report.id, token: report.token }]),
+  );
 const tokenFor = (id) => getMine().find((item) => item.id === id)?.token;
 
 function describeFix(p) {
@@ -88,69 +94,72 @@ export default function Reporter() {
     watchId.current = null;
   }, []);
 
-  const startGps = useCallback((fromUploadedPhoto = false) => {
-    stopGps();
-    best.current = null;
-    setPos(null);
-    if (!("geolocation" in navigator)) {
+  const startGps = useCallback(
+    (fromUploadedPhoto = false) => {
+      stopGps();
+      best.current = null;
+      setPos(null);
+      if (!("geolocation" in navigator)) {
+        setGps({
+          state: "bad",
+          title: "Location is not available on this device",
+          sub: "",
+          retry: false,
+        });
+        return;
+      }
       setGps({
-        state: "bad",
-        title: "Location is not available on this device",
-        sub: "",
+        state: "wait",
+        title: "Getting your location…",
+        sub: "Stay where you took the photo.",
         retry: false,
       });
-      return;
-    }
-    setGps({
-      state: "wait",
-      title: "Getting your location…",
-      sub: "Stay where you took the photo.",
-      retry: false,
-    });
-    const t0 = Date.now();
-    watchId.current = navigator.geolocation.watchPosition(
-      (p) => {
-        const c = p.coords;
-        if (!best.current || c.accuracy < best.current.acc)
-          best.current = {
-            lat: c.latitude,
-            lng: c.longitude,
-            acc: c.accuracy,
-            fromUploadedPhoto,
-            locationSource: "device",
-          };
-        setPos({ ...best.current });
-        setGps(describeFix(best.current));
-        if (c.accuracy <= 15 || Date.now() - t0 > 12000) stopGps();
-      },
-      (err) => {
+      const t0 = Date.now();
+      watchId.current = navigator.geolocation.watchPosition(
+        (p) => {
+          const c = p.coords;
+          if (!best.current || c.accuracy < best.current.acc)
+            best.current = {
+              lat: c.latitude,
+              lng: c.longitude,
+              acc: c.accuracy,
+              fromUploadedPhoto,
+              locationSource: "device",
+            };
+          setPos({ ...best.current });
+          setGps(describeFix(best.current));
+          if (c.accuracy <= 15 || Date.now() - t0 > 12000) stopGps();
+        },
+        (err) => {
+          stopGps();
+          setGps({
+            state: "bad",
+            title:
+              err.code === 1
+                ? "Location permission was denied"
+                : "Could not get your location",
+            sub:
+              err.code === 1
+                ? "Allow location for this site, then try again."
+                : "Turn on location and try again.",
+            retry: true,
+          });
+        },
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
+      );
+      timer.current = setTimeout(() => {
         stopGps();
-        setGps({
-          state: "bad",
-          title:
-            err.code === 1
-              ? "Location permission was denied"
-              : "Could not get your location",
-          sub:
-            err.code === 1
-              ? "Allow location for this site, then try again."
-              : "Turn on location and try again.",
-          retry: true,
-        });
-      },
-      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
-    );
-    timer.current = setTimeout(() => {
-      stopGps();
-      if (!best.current)
-        setGps({
-          state: "bad",
-          title: "Could not get your location",
-          sub: "Turn on location and try again.",
-          retry: true,
-        });
-    }, 15000);
-  }, [stopGps]);
+        if (!best.current)
+          setGps({
+            state: "bad",
+            title: "Could not get your location",
+            sub: "Turn on location and try again.",
+            retry: true,
+          });
+      }, 15000);
+    },
+    [stopGps],
+  );
 
   useEffect(() => () => stopGps(), [stopGps]);
 
@@ -214,7 +223,12 @@ export default function Reporter() {
       setView("review");
       if (hasPhotoLocation) {
         stopGps();
-        setPos({ lat: exif.lat, lng: exif.lng, acc: null, locationSource: "photo" });
+        setPos({
+          lat: exif.lat,
+          lng: exif.lng,
+          acc: null,
+          locationSource: "photo",
+        });
         setGps({
           state: "good",
           title: "Location read from photo",
@@ -262,7 +276,8 @@ export default function Reporter() {
       acc: Number.isFinite(pos.acc) ? pos.acc : null,
       ts,
       source: photoMeta?.source || "camera",
-      locationSource: pos.locationSource || photoMeta?.locationSource || "device",
+      locationSource:
+        pos.locationSource || photoMeta?.locationSource || "device",
       timeSource: photoMeta?.takenAt ? "photo" : "submitted",
       type,
       note: note.trim(),
@@ -279,7 +294,9 @@ export default function Reporter() {
       });
       const result = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(result.error || "Could not submit this report. Please try again.");
+        alert(
+          result.error || "Could not submit this report. Please try again.",
+        );
         setSending(false);
         return;
       }
@@ -327,6 +344,8 @@ export default function Reporter() {
       if (!navigator.onLine) return;
       try {
         const queued = await getOfflineReports();
+        let settled = 0;
+        let rejected = 0;
         for (const item of queued) {
           // Remove the queueId before sending to the API
           const { queueId, needsUpload, ...payload } = item;
@@ -341,9 +360,25 @@ export default function Reporter() {
             const r = await res.json();
             addMine(r);
             await clearOfflineReport(queueId);
+            settled += 1;
+            continue;
+          }
+          // 409 means the server will never take this photo: it is a duplicate.
+          // Drop it rather than resending it on every reconnect.
+          if (res.status === 409) {
+            await clearOfflineReport(queueId);
+            settled += 1;
+            rejected += 1;
           }
         }
-        if (queued.length > 0) refreshMine();
+        if (settled > 0) refreshMine();
+        if (rejected > 0)
+          alert(
+            rejected === 1
+              ? "A saved report was not accepted because its photo had already been sent."
+              : rejected +
+                  " saved reports were not accepted because their photos had already been sent.",
+          );
       } catch (e) {
         console.error("Sync failed, will retry later.");
       }
@@ -365,7 +400,9 @@ export default function Reporter() {
 
       {view === "home" && (
         <section>
-          <div className="notice" role="status">{t("notice.screenshot")}</div>
+          <div className="notice" role="status">
+            {t("notice.screenshot")}
+          </div>
           <h1>{t("home.title")}</h1>
           <p className="muted">{t("home.sub")}</p>
 

@@ -1,0 +1,964 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wetland Watch: signals, cases and NEMA capacity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f8f4;--surface:#fff;--surface2:#eef4ee;--ink:#12352e;--muted:#4f6d65;--line:#d5e2dc;--green:#175e4c;--on-green:#fff;--river:#146d93;--on-river:#fff;--sand:#f3ead8;--sand-ink:#664e2b;--leaf:#b9cf91;--blue-bg:#e8f4f5;--green-bg:#edf5e8;--danger:#a63a26;--danger-bg:#fbe9e4;--warn:#7a5000;--warn-bg:#fdf1d3;--ok:#1d6b45;--ok-bg:#e0f1e6;--focus:#d9962a;--deep:#12352e;--on-deep:#eaf3ee;--water:#2784a8;--water2:#65a8bd;--land:#b8d18d;--land2:#93b979;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1c18;--surface:#122822;--surface2:#17332c;--ink:#e8f2ee;--muted:#a3bdb3;--line:#264840;--green:#5bbf9d;--on-green:#08251d;--river:#5ab8dc;--on-river:#06222e;--sand:#3a3222;--sand-ink:#ecd9ab;--blue-bg:#12303a;--green-bg:#15332b;--danger:#f0917a;--danger-bg:#3a1e18;--warn:#f0c46a;--warn-bg:#3a2f14;--ok:#7fd6a4;--ok-bg:#153a28;--deep:#0a1714;--on-deep:#e2efe9;--water:#2f8fb3;--water2:#3c7d92;--land:#4d6b45;--land2:#3c5a3a}}
+:root[data-theme="dark"]{--bg:#0c1c18;--surface:#122822;--surface2:#17332c;--ink:#e8f2ee;--muted:#a3bdb3;--line:#264840;--green:#5bbf9d;--on-green:#08251d;--river:#5ab8dc;--on-river:#06222e;--sand:#3a3222;--sand-ink:#ecd9ab;--blue-bg:#12303a;--green-bg:#15332b;--danger:#f0917a;--danger-bg:#3a1e18;--warn:#f0c46a;--warn-bg:#3a2f14;--ok:#7fd6a4;--ok-bg:#153a28;--deep:#0a1714;--on-deep:#e2efe9;--water:#2f8fb3;--water2:#3c7d92;--land:#4d6b45;--land2:#3c5a3a}
+html{box-sizing:border-box;height:100%;scroll-padding-top:calc(env(safe-area-inset-top,0px) + 120px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Libre Franklin",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.55;-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+h1,h2,h3{font-family:"Fraunces",Georgia,"Times New Roman",serif;line-height:1.12;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(2rem,5.2vw,3.4rem);font-weight:700}
+h2{font-size:clamp(1.5rem,3.2vw,2.1rem);font-weight:700}
+h3{font-size:1.2rem;font-weight:600}
+p{margin:0}
+.wrap{width:min(100% - 2rem,1180px);margin:0 auto}
+.muted{color:var(--muted)}
+.small{font-size:.875rem}
+.measure{max-width:64ch}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem 1.5rem;padding:.6rem 0}
+.brand{display:flex;align-items:center;gap:.6rem;font-weight:700;font-size:1.05rem}
+.brand svg{width:34px;height:34px}
+.tabs{display:flex;gap:.25rem;overflow-x:auto;max-width:100%;scrollbar-width:thin}
+.tabs button{border:0;background:transparent;padding:.55rem .9rem;border-radius:.7rem;font-weight:600;font-size:.92rem;color:var(--muted);cursor:pointer;white-space:nowrap}
+.tabs button:hover{color:var(--ink);background:var(--surface2)}
+.tabs button[aria-current="page"]{background:var(--green);color:var(--on-green)}
+.ribbon{background:var(--sand);color:var(--sand-ink);font-size:.85rem;font-weight:600;padding:.45rem 0}
+.pause{background:var(--danger);color:#fff;font-weight:700;padding:.6rem 0;text-align:center}
+main{padding-bottom:4rem}
+section[data-view]{padding-top:2.2rem}
+/* primitives */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:1rem;padding:1.4rem}
+.card.flat{background:var(--surface2)}
+.stack>*+*{margin-top:1rem}
+.grid{display:grid;gap:1.2rem}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))}
+.row{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
+.between{justify-content:space-between}
+.btn{border:2px solid transparent;border-radius:.75rem;padding:.7rem 1.1rem;font-weight:700;cursor:pointer;font-size:.95rem;line-height:1.2}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.a{background:var(--green);color:var(--on-green)}
+.btn.b{background:var(--river);color:var(--on-river)}
+.btn.o{background:transparent;border-color:var(--river);color:var(--river)}
+.btn.g{background:var(--surface2);border-color:var(--line)}
+.btn.sm{padding:.45rem .8rem;font-size:.85rem}
+label.f{display:block;font-weight:600;font-size:.92rem}
+.f>input,.f>select,.f>textarea,.inp{display:block;width:100%;margin-top:.35rem;padding:.65rem .75rem;border:1px solid var(--line);border-radius:.6rem;background:var(--surface);font-weight:400}
+textarea{resize:vertical;min-height:5rem}
+.chk{display:flex;gap:.7rem;align-items:flex-start;padding:.85rem 1rem;border:1px solid var(--line);border-radius:.7rem;background:var(--surface);cursor:pointer;font-size:.93rem}
+.chk input{margin-top:.25rem;width:1.05rem;height:1.05rem;accent-color:var(--green);flex:none}
+.seg{display:inline-flex;flex-wrap:wrap;gap:.25rem;padding:.25rem;background:var(--surface2);border:1px solid var(--line);border-radius:.85rem}
+.seg button{border:0;background:transparent;padding:.5rem .9rem;border-radius:.6rem;font-weight:600;cursor:pointer;font-size:.9rem;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:2rem;padding:.35rem .8rem;font-size:.85rem;font-weight:600;cursor:pointer}
+.chip b{font-weight:700;color:var(--muted);margin-left:.25rem}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.on b{color:inherit}
+.badge{display:inline-block;padding:.15rem .6rem;border-radius:2rem;font-size:.78rem;font-weight:700;border:1px solid transparent;white-space:nowrap}
+.b-danger{background:var(--danger-bg);color:var(--danger);border-color:var(--danger)}
+.b-warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn)}
+.b-info{background:var(--blue-bg);color:var(--river);border-color:var(--river)}
+.b-mute{background:var(--surface2);color:var(--muted);border-color:var(--line)}
+.b-sand{background:var(--sand);color:var(--sand-ink);border-color:var(--sand-ink)}
+.b-out{background:transparent;color:var(--muted);border:1px dashed var(--muted)}
+.b-ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.note{border-radius:.8rem;padding:.8rem 1rem;font-size:.9rem;font-weight:500}
+.note.sand{background:var(--sand);color:var(--sand-ink)}
+.note.blue{background:var(--blue-bg);color:var(--ink);border:1px solid var(--river)}
+.note.red{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+.note.ok{background:var(--ok-bg);color:var(--ok)}
+dl.facts{margin:0;display:grid;grid-template-columns:7.5rem 1fr;gap:.55rem 1rem;font-size:.93rem}
+dl.facts dt{font-weight:700;color:var(--muted)}
+dl.facts dd{margin:0}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:.9rem;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th,td{padding:.7rem .9rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--surface2);font-weight:700;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+tbody tr.sel{background:var(--blue-bg)}
+.linkbtn{background:none;border:0;padding:0;font-weight:700;color:var(--river);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.bar{height:.6rem;border-radius:1rem;background:var(--surface2);border:1px solid var(--line);overflow:hidden;min-width:90px}
+.bar>i{display:block;height:100%;background:var(--green)}
+.bar.warn>i{background:#c98a1b}.bar.breach>i{background:var(--danger)}.bar.river>i{background:var(--river)}
+.tone-ok{color:var(--ok)}.tone-warn{color:var(--warn)}.tone-breach{color:var(--danger)}
+/* hero */
+.hero{display:grid;gap:2rem;align-items:center;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));padding-bottom:1rem}
+.hero p.lead{font-size:1.12rem;margin-top:1.1rem;color:var(--muted)}
+.split{position:relative;border:1px solid var(--line);border-radius:1.6rem;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;min-height:360px;background:var(--surface)}
+.split>div{padding:1.3rem;position:relative}
+.split .sig{background:linear-gradient(160deg,var(--green-bg),var(--blue-bg))}
+.split .cas{background:var(--surface)}
+.split h3{font-size:1.1rem;margin-bottom:.4rem}
+.split .gate{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;background:var(--deep);color:var(--on-deep);border-radius:.8rem;padding:.55rem .7rem;font-size:.74rem;font-weight:700;text-align:center;width:104px;line-height:1.3;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.ripples{position:absolute;inset:auto -30px -30px auto;width:220px;height:220px;pointer-events:none}
+.stamp{margin-top:1rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.7rem;line-height:1.5;border:2px solid var(--river);color:var(--river);border-radius:.6rem;padding:.5rem .6rem;word-break:break-all}
+.dots span{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--green);margin:0 3px 3px 0;opacity:.55}
+@media(max-width:520px){.split{grid-template-columns:1fr}.split .gate{position:static;transform:none;width:auto;margin:0 1.3rem}}
+/* progress */
+.prog{display:flex;gap:.4rem;list-style:none;padding:0;margin:0 0 1.3rem;flex-wrap:wrap}
+.prog li{flex:1;min-width:5.5rem;font-size:.82rem;font-weight:600;color:var(--muted);border-top:4px solid var(--line);padding-top:.4rem}
+.prog li.done{border-color:var(--green);color:var(--ink)}
+.prog li.now{border-color:var(--river);color:var(--ink)}
+/* phone */
+.phone{width:min(100%,300px);margin:0 auto;background:#1b2624;border-radius:2rem;padding:1rem .9rem 1.1rem;box-shadow:0 12px 30px rgba(0,0,0,.25)}
+.screen{background:#c9dcc0;color:#12281f;border-radius:.7rem;padding:.75rem;height:250px;overflow-y:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.78rem;white-space:pre-wrap;line-height:1.45}
+.screen .you{color:#33574c;font-weight:700}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin-top:.8rem}
+.keys button{background:#33413e;color:#eaf3ee;border:0;border-radius:.6rem;padding:.6rem 0;font-weight:700;font-size:1rem;cursor:pointer}
+.keys button:hover{background:#44554f}
+/* timeline */
+.tl{list-style:none;margin:0;padding:0}
+.tl li{position:relative;padding:0 0 1.3rem 2rem;border-left:2px solid var(--line);margin-left:.5rem}
+.tl li:last-child{border-color:transparent;padding-bottom:0}
+.tl li::before{content:"";position:absolute;left:-.6rem;top:.1rem;width:1.1rem;height:1.1rem;border-radius:50%;background:var(--surface);border:2px solid var(--line)}
+.tl li.done{border-color:var(--green)}
+.tl li.done::before{background:var(--green);border-color:var(--green)}
+.tl li.bad::before{background:var(--sand-ink);border-color:var(--sand-ink)}
+.sms{background:var(--surface2);border:1px solid var(--line);border-radius:1.1rem 1.1rem 1.1rem .2rem;padding:.8rem 1rem;max-width:34rem;font-size:.95rem}
+/* console */
+.cap-grid{display:grid;gap:1.4rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr))}
+.rng{display:block;margin-top:1rem}
+.rng .r{display:flex;justify-content:space-between;font-weight:600;font-size:.9rem}
+.rng input{width:100%;accent-color:var(--river);margin-top:.3rem}
+.detail{margin-top:1.2rem}
+.hr{border:0;border-top:1px solid var(--line);margin:1.1rem 0}
+.aud{list-style:none;margin:0;padding:0;font-size:.85rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.aud li{padding:.4rem 0;border-bottom:1px dashed var(--line)}
+.stat{font-family:"Fraunces",Georgia,serif;font-size:2rem;font-weight:700;line-height:1}
+svg.map{width:100%;height:auto;border-radius:1rem;border:1px solid var(--line);background:linear-gradient(145deg,var(--green-bg),var(--surface2))}
+svg.map .cl{cursor:pointer}
+.cmp{display:grid;grid-template-columns:8rem 1fr;gap:.4rem .8rem;align-items:center;font-size:.88rem}
+.pilotgrid td input{width:6.2rem;padding:.4rem .5rem;border:1px solid var(--line);border-radius:.5rem;background:var(--surface)}
+.pilotgrid td input:disabled{background:var(--surface2);color:var(--muted)}
+.foot{border-top:1px solid var(--line);padding:1.6rem 0 2.2rem;color:var(--muted);font-size:.88rem}
+@media(prefers-reduced-motion:no-preference){.split .sig .ripples circle{animation:rp 5s ease-out infinite}.split .sig .ripples circle:nth-child(2){animation-delay:1.6s}.split .sig .ripples circle:nth-child(3){animation-delay:3.2s}}
+@keyframes rp{0%{opacity:.7;transform:scale(.4)}100%{opacity:0;transform:scale(1)}}
+.split .sig .ripples circle{transform-origin:110px 110px}
+</style>
+</head>
+<body>
+
+<header class="top">
+ <div class="wrap topbar">
+  <div class="brand">
+   <svg viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="10" fill="var(--green)"/><path d="M6 15c4-4 6 4 10 0s6-4 14 0M6 23c4-4 6 4 10 0s6-4 14 0" fill="none" stroke="var(--on-green)" stroke-width="2.4" stroke-linecap="round"/></svg>
+   <span>Wetland Watch</span>
+  </div>
+  <nav class="tabs" aria-label="Sections">
+   <button type="button" data-tab="report">Report</button>
+   <button type="button" data-tab="track">Track a case</button>
+   <button type="button" data-tab="console">NEMA console</button>
+   <button type="button" data-tab="hotspots">Hotspots</button>
+   <button type="button" data-tab="oversight">Oversight</button>
+   <button type="button" data-tab="pilot">Pilot</button>
+  </nav>
+ </div>
+ <div class="ribbon"><div class="wrap">Concept prototype. Nothing you enter is collected, saved or sent. All numbers are illustrative samples.</div></div>
+ <div class="pause" id="pause-banner" role="alert" hidden>Pilot paused: a confirmed reporter-identification incident is under review. No new cases are promoted to inspection.</div>
+</header>
+
+<main>
+<div class="wrap">
+
+<!-- ================= REPORT ================= -->
+<section data-view="report">
+ <div class="hero">
+  <div>
+   <h1>Tell us what you see at the wetland. Choose how far it goes.</h1>
+   <p class="lead measure">A community signal helps map the problem. An evidence-grade case starts a consent-based review by NEMA. They are different routes, and a voice note never quietly becomes a legal case.</p>
+   <div class="row" style="margin-top:1.6rem">
+    <button class="btn a" type="button" data-try-open="a">Send a community signal</button>
+    <button class="btn o" type="button" data-try-open="b">Start an evidence-grade case</button>
+   </div>
+  </div>
+  <div class="split" aria-label="Diagram: a signal feeds an aggregate hotspot map; a case passes a consent gate into NEMA review">
+   <div class="sig">
+    <h3>Community signal</h3>
+    <p class="small muted">Anonymous. Counted with others to show where attention is needed.</p>
+    <div class="dots" style="margin-top:1.2rem" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <p class="small" style="margin-top:.6rem;font-weight:600">Output: a hotspot summary</p>
+    <svg class="ripples" viewBox="0 0 220 220" aria-hidden="true"><circle cx="110" cy="110" r="100" fill="none" stroke="var(--river)" stroke-width="1.5"/><circle cx="110" cy="110" r="100" fill="none" stroke="var(--river)" stroke-width="1.5"/><circle cx="110" cy="110" r="100" fill="none" stroke="var(--river)" stroke-width="1.5"/></svg>
+   </div>
+   <div class="gate">Published rule<br>plus consent</div>
+   <div class="cas">
+    <h3>Evidence-grade case</h3>
+    <p class="small muted">Consent first. Signed at the moment of capture. Reviewed by a person.</p>
+    <div class="stamp" aria-hidden="true">case NEMA-234<br>hash 9f2c…e41a<br>signed on device</div>
+    <p class="small" style="margin-top:.8rem;font-weight:600">Output: a case ID and status updates</p>
+   </div>
+  </div>
+ </div>
+
+ <div class="grid g4" style="margin-top:2rem">
+  <div class="card flat"><h3>Signals are not cases</h3><p class="small muted" style="margin-top:.4rem">Anonymous voices reveal hotspots. They never trigger enforcement on their own.</p></div>
+  <div class="card flat"><h3>Consent before contact</h3><p class="small muted" style="margin-top:.4rem">NEMA only contacts a reporter who has said yes, through a channel they chose.</p></div>
+  <div class="card flat"><h3>People decide</h3><p class="small muted" style="margin-top:.4rem">No auto-rejection. No machine translation as evidence. Every decision has a reason and an appeal.</p></div>
+  <div class="card flat"><h3>Sized to capacity</h3><p class="small muted" style="margin-top:.4rem">Cases reach inspection at the pace NEMA can absorb. Nothing is dropped silently.</p></div>
+ </div>
+
+ <h2 style="margin-top:3rem">Two tracks, side by side</h2>
+ <div class="grid g2" style="margin-top:1.2rem">
+  <article class="card" style="background:var(--green-bg)">
+   <div class="row between"><h3>Track A: Community signal</h3><span class="badge b-ok">No identity needed</span></div>
+   <dl class="facts" style="margin-top:1.1rem">
+    <dt>Identity</dt><dd>Not asked. Nothing links the signal to your phone number.</dd>
+    <dt>Evidence</dt><dd>None required. No chain of custody.</dd>
+    <dt>Used for</dt><dd>Hotspots, awareness and early warning. Not automatic enforcement.</dd>
+    <dt>Feedback</dt><dd>“Received. This helps us map the problem.”</dd>
+    <dt>Rewards</dt><dd>None.</dd>
+   </dl>
+   <button class="btn a" type="button" style="margin-top:1.3rem" data-try-open="a">Try a signal</button>
+  </article>
+  <article class="card" style="background:var(--blue-bg)">
+   <div class="row between"><h3>Track B: Evidence-grade case</h3><span class="badge b-info">Explicit consent</span></div>
+   <dl class="facts" style="margin-top:1.1rem">
+    <dt>Identity</dt><dd>Kept in a separate encrypted vault, never on the case record.</dd>
+    <dt>Evidence</dt><dd>Signed at capture: photo, GPS accuracy, timestamp, device signature. Or a voice recording on the 0800 line.</dd>
+    <dt>Used for</dt><dd>A human-reviewed case that can be queued for inspection.</dd>
+    <dt>Feedback</dt><dd>Received, Assigned, Action taken, or No action with a reason.</dd>
+    <dt>Rewards</dt><dd>Community recognition, a public thank-you, or lottery-based airtime after verification. Never cash per case.</dd>
+   </dl>
+   <button class="btn b" type="button" style="margin-top:1.3rem" data-try-open="b">Try a case</button>
+  </article>
+ </div>
+
+ <h2 style="margin-top:3rem">Pick the channel that works for you</h2>
+ <p class="muted measure" style="margin-top:.6rem">Access should not depend on one device or one connection. The platform does not store phone numbers on signals. Telecom and WhatsApp providers still see that a contact happened, so we say so plainly.</p>
+ <div class="tbl-wrap" style="margin-top:1.2rem">
+  <table>
+   <thead><tr><th>Channel</th><th>Track A signal</th><th>Track B case</th></tr></thead>
+   <tbody>
+    <tr><td><b>Smartphone app (PWA)</b></td><td>Anonymous form with an optional voice note.</td><td>Works offline. Captures photo, GPS accuracy, timestamp and a device signature.</td></tr>
+    <tr><td><b>Toll-free 0800 IVR</b></td><td>Speak a short anonymous message.</td><td>Consent and voice recording, signed when captured. Built for basic phones.</td></tr>
+    <tr><td><b>USSD</b></td><td>Request a callback.</td><td>Menu and callback only. Never evidence.</td></tr>
+    <tr><td><b>WhatsApp</b></td><td>Send a message that is counted as a signal.</td><td>Notifications only. Never evidence.</td></tr>
+   </tbody>
+  </table>
+ </div>
+
+ <h2 id="try" style="margin-top:3rem">Try it</h2>
+ <div class="seg" id="try-seg" style="margin-top:1rem" role="group" aria-label="Choose a demo">
+  <button type="button" data-try="a" aria-pressed="true">Send a signal</button>
+  <button type="button" data-try="b" aria-pressed="false">Start a case</button>
+  <button type="button" data-try="phone" aria-pressed="false">Basic phone</button>
+ </div>
+
+ <!-- Track A -->
+ <div class="card" data-try-panel="a" style="margin-top:1rem;max-width:640px">
+  <div id="sig-form">
+   <h3>Send a community signal</h3>
+   <p class="small muted" style="margin-top:.3rem">No name, no evidence. Two minutes at most.</p>
+   <form id="sigf" class="stack" style="margin-top:1.2rem">
+    <label class="f">Where is it?<textarea id="sig-loc" placeholder="For example: the channel behind the fuel station, north side"></textarea></label>
+    <label class="f">What is happening?
+     <select id="sig-cat"><option>Drainage or filling</option><option>Dumping or pollution</option><option>Vegetation clearing</option><option>Other concern</option></select></label>
+    <label class="f">How are you sending this?
+     <select id="sig-ch"><option>Smartphone app</option><option>0800 voice line</option><option>USSD callback request</option><option>WhatsApp message</option></select></label>
+    <div><div class="row"><button type="button" class="btn g sm" id="sig-rec" aria-pressed="false">Record a voice note (demo)</button><span class="small muted" id="sig-rec-t">Optional</span></div></div>
+    <label class="chk"><input type="checkbox" id="sig-cb"><span>Optional: allow a safe callback if this area becomes a hotspot. It is stored separately and never attached to this signal.</span></label>
+    <button class="btn a" type="submit">Send signal</button>
+   </form>
+  </div>
+  <div id="sig-done" hidden>
+   <div class="note ok" style="font-size:1.05rem;font-weight:700">Received. This helps us map the problem.</div>
+   <ul class="small" style="margin:1rem 0 0;padding-left:1.1rem;line-height:1.8">
+    <li>Your signal is counted with others in a hotspot summary.</li>
+    <li>It is not a case, and no one is investigated because of it.</li>
+    <li>There is no reward for signals. There is nothing more you need to do.</li>
+   </ul>
+   <div class="row" style="margin-top:1.2rem"><button class="btn g" type="button" id="sig-again">Send another</button><button class="btn o" type="button" data-try-open="b">Add evidence through a case instead</button></div>
+  </div>
+ </div>
+
+ <!-- Track B -->
+ <div class="card" data-try-panel="b" style="margin-top:1rem;max-width:760px" hidden>
+  <div id="wz"></div>
+ </div>
+
+ <!-- Phone -->
+ <div data-try-panel="phone" style="margin-top:1rem" hidden>
+  <div class="grid g2">
+   <div class="card">
+    <h3>No smartphone needed</h3>
+    <p class="small muted" style="margin-top:.4rem">USSD runs the menu and books a callback. Evidence is only ever recorded on the toll-free voice call.</p>
+    <div class="seg" id="ph-seg" style="margin-top:1rem" role="group" aria-label="Phone channel">
+     <button type="button" data-ph="ussd" aria-pressed="true">USSD menu</button>
+     <button type="button" data-ph="ivr" aria-pressed="false">0800 voice call</button>
+    </div>
+    <p class="small muted" style="margin-top:1rem" id="ph-help">Use the keypad. The short code and the free number are placeholders until the telecom MoU is agreed.</p>
+    <button class="btn g sm" type="button" id="ph-restart" style="margin-top:.8rem">Start again</button>
+   </div>
+   <div class="phone" aria-label="Basic phone simulator">
+    <div class="screen" id="ph-screen" role="log" aria-live="polite"></div>
+    <div class="keys" id="ph-keys"></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<!-- ================= TRACK ================= -->
+<section data-view="track" hidden>
+ <h1>What happens after you report?</h1>
+ <p class="lead muted measure" style="margin-top:1rem;font-size:1.1rem">You get honest updates in plain words. Messages never name a site or a person, and they can be worded so anyone glancing at your phone learns nothing.</p>
+ <div class="grid g2" style="margin-top:2rem;align-items:start">
+  <div class="card">
+   <label class="f">Case ID<input class="inp" id="tr-id" value="NEMA-234" autocomplete="off" inputmode="text"></label>
+   <p class="small tone-breach" id="tr-hint" hidden style="margin-top:.4rem">Case IDs look like NEMA-234.</p>
+   <p class="small muted" style="margin-top:1rem;font-weight:600">Preview an update</p>
+   <div class="seg" id="tr-seg" style="margin-top:.4rem" role="group" aria-label="Preview status">
+    <button type="button" data-st="0" aria-pressed="true">Received</button>
+    <button type="button" data-st="1" aria-pressed="false">Assigned</button>
+    <button type="button" data-st="2" aria-pressed="false">Action taken</button>
+    <button type="button" data-st="3" aria-pressed="false">No action</button>
+   </div>
+   <ol class="tl" id="tr-tl" style="margin-top:1.6rem"></ol>
+   <hr class="hr">
+   <p class="small muted" style="font-weight:600">The message you would get</p>
+   <div class="sms" id="tr-sms" style="margin-top:.5rem"></div>
+   <label class="chk" style="margin-top:1rem"><input type="checkbox" id="tr-disc"><span>Discreet wording. Use this if other people might see your phone.</span></label>
+   <div id="tr-appeal" hidden style="margin-top:1.2rem"></div>
+  </div>
+  <div class="stack">
+   <div class="card">
+    <h3>Reporter protection</h3>
+    <ul class="small" style="padding-left:1.1rem;line-height:1.8;margin:.8rem 0 0">
+     <li>No retaliation, and a safe channel to tell us if it happens.</li>
+     <li>NEMA contacts you only after you consent.</li>
+     <li>Inspectors never say what prompted a visit.</li>
+     <li>Feedback never names sites or alleged violators.</li>
+     <li>Legal support is available if you need it.</li>
+     <li>Linking a phone number to a case is restricted and logged.</li>
+    </ul>
+   </div>
+   <div class="card">
+    <h3>Recognition, not payment</h3>
+    <p class="small muted" style="margin-top:.5rem">After a case is verified you can choose community recognition, a public thank-you, or entry into a lottery for airtime. We never pay cash per case, because that rewards volume over truth. Signals earn no reward.</p>
+   </div>
+   <div class="note sand" id="tr-wait"></div>
+  </div>
+ </div>
+</section>
+
+<!-- ================= CONSOLE ================= -->
+<section data-view="console" hidden>
+ <h1>NEMA case console</h1>
+ <p class="muted measure" style="margin-top:1rem;font-size:1.1rem">Built around what inspectors can actually absorb. Cases wait in an honest queue. A person reviews every decision, and every action leaves a trail.</p>
+
+ <div class="card" style="margin-top:1.8rem">
+  <h2 style="font-size:1.4rem">Absorption capacity</h2>
+  <p class="small muted" style="margin-top:.3rem">Signals never use inspection capacity. Only verified cases do. Move the sliders to see what a month looks like.</p>
+  <div class="cap-grid">
+   <div>
+    <label class="rng"><span class="r"><span>Inspectors on wetland cases</span><output id="c-ins-o"></output></span><input type="range" id="c-ins" min="1" max="15" value="4"></label>
+    <label class="rng"><span class="r"><span>Hours per inspector each month</span><output id="c-hrs-o"></output></span><input type="range" id="c-hrs" min="4" max="60" value="24"></label>
+    <label class="rng"><span class="r"><span>Hours per inspection, with travel and affidavit</span><output id="c-hpc-o"></output></span><input type="range" id="c-hpc" min="4" max="30" value="12"></label>
+    <label class="rng"><span class="r"><span>Verified cases arriving each month</span><output id="c-dem-o"></output></span><input type="range" id="c-dem" min="0" max="30" value="14"></label>
+    <label class="rng"><span class="r"><span>Cases already waiting</span><output id="c-bak-o"></output></span><input type="range" id="c-bak" min="0" max="60" value="9"></label>
+   </div>
+   <div id="c-out"></div>
+  </div>
+ </div>
+
+ <h2 style="margin-top:2.6rem;font-size:1.5rem">Case queue</h2>
+ <div class="row" id="cf" style="margin-top:.8rem"></div>
+ <div class="tbl-wrap" style="margin-top:.8rem">
+  <table>
+   <thead><tr><th>Case</th><th>Triage</th><th>Channel</th><th>Where it stands</th><th>Timer</th></tr></thead>
+   <tbody id="cq"></tbody>
+  </table>
+ </div>
+ <p class="small muted" style="margin-top:.6rem">Timer limits are placeholders until thresholds are pre-registered: acknowledge 48 h, triage 7 d, inspect 30 d, decide 14 d.</p>
+ <div id="detail" class="detail"></div>
+</section>
+
+<!-- ================= HOTSPOTS ================= -->
+<section data-view="hotspots" hidden>
+ <h1>Hotspots from community signals</h1>
+ <p class="muted measure" style="margin-top:1rem;font-size:1.1rem">Signals are shown only as counts in an area. A hotspot is a published rule being met, not a judgement about anyone.</p>
+ <div class="grid g2" style="margin-top:1.8rem;align-items:start">
+  <div>
+   <svg class="map" id="hs-map" viewBox="0 0 600 400" role="img" aria-label="Abstract wetland map with clustered signal counts"></svg>
+   <div class="row small" style="margin-top:.7rem"><span><b style="color:var(--green)">●</b> Hotspot, rule met</span><span><b style="color:var(--muted)">◌</b> Watching, below the rule</span><span class="muted">Areas with fewer than 3 signals are never shown.</span></div>
+  </div>
+  <div class="stack">
+   <div class="card">
+    <h3>The published rule</h3>
+    <p style="margin-top:.6rem" id="hs-rule"></p>
+    <label class="rng"><span class="r"><span>Independent signals needed</span><output id="hs-n-o"></output></span><input type="range" id="hs-n" min="3" max="15" value="6"></label>
+    <div class="seg" id="hs-w" style="margin-top:1rem" role="group" aria-label="Time window">
+     <button type="button" data-w="30" aria-pressed="true">30 days</button>
+     <button type="button" data-w="60" aria-pressed="false">60 days</button>
+     <button type="button" data-w="90" aria-pressed="false">90 days</button>
+    </div>
+   </div>
+   <div class="card" id="hs-detail"><p class="muted small">Select an area on the map to see its summary.</p></div>
+  </div>
+ </div>
+
+ <h2 style="margin-top:2.6rem;font-size:1.5rem">Bias audit</h2>
+ <p class="muted measure" style="margin-top:.5rem">Low signal counts can mean low access, not low harm. Hotspot clustering and any reporter reputation feature are audited before use and on a set schedule.</p>
+ <div class="grid g3" style="margin-top:1.2rem">
+  <div class="card">
+   <h3>Signals per 1,000 residents</h3>
+   <div class="cmp" style="margin-top:1rem">
+    <span>Urban site</span><div class="bar river"><i style="width:100%"></i></div>
+    <span>Lubigi</span><div class="bar river"><i style="width:63%"></i></div>
+    <span>Rural site</span><div class="bar river"><i style="width:17%"></i></div>
+   </div>
+   <p class="small" style="margin-top:.9rem">4.1, 2.6 and 0.7 (sample). The rural rate is about six times lower, which points to an access gap. Response: extend IVR outreach. Do not deprioritise the site.</p>
+  </div>
+  <div class="card">
+   <h3>Clustering check</h3>
+   <p class="small muted" style="margin-top:.5rem">Before each release, compare hotspot rates by area type and by channel mix. Flag any hotspot that exists only because one channel is over-represented.</p>
+   <p style="margin-top:.8rem"><span class="badge b-warn">Review due before pilot</span></p>
+  </div>
+  <div class="card">
+   <h3>Reporter reputation</h3>
+   <p class="small muted" style="margin-top:.5rem">No reputation score weights, ranks or rejects anyone. If one is ever proposed, it must pass a bias audit and go through appeal design first.</p>
+   <p style="margin-top:.8rem"><span class="badge b-mute">Off</span></p>
+  </div>
+ </div>
+</section>
+
+<!-- ================= OVERSIGHT ================= -->
+<section data-view="oversight" hidden>
+ <h1>Governance and oversight</h1>
+ <p class="muted measure" style="margin-top:1rem;font-size:1.1rem">The pilot does not start until every gate below is ready. Independent oversight sees aggregate data and access logs, never identities.</p>
+
+ <div class="grid g2" style="margin-top:1.8rem;align-items:start">
+  <div class="card">
+   <div class="row between"><h3>Pre-pilot gates</h3><span class="badge b-warn" id="gate-badge"></span></div>
+   <div class="stack" id="gates" style="margin-top:1rem"></div>
+  </div>
+  <div class="card">
+   <h3>Who signs the MoU</h3>
+   <div class="row" style="margin-top:.8rem"><span class="chip">NEMA</span><span class="chip">Telecom operators</span><span class="chip">Data Protection Office</span><span class="chip">Civil society organisations</span><span class="chip">Judiciary</span></div>
+   <p class="small muted" style="margin-top:1rem">The DPIA is completed before data collection. Records are retained under a schedule, with a legal hold for any case in proceedings. Role-based access and access logs are on from day one.</p>
+  </div>
+ </div>
+
+ <h2 style="margin-top:2.6rem;font-size:1.5rem">Who can see what</h2>
+ <p class="small muted" style="margin-top:.4rem">Proposed access model.</p>
+ <div class="tbl-wrap" style="margin-top:.8rem">
+  <table>
+   <thead><tr><th>Role</th><th>Signal aggregates</th><th>Case record</th><th>Signed evidence</th><th>Identity vault</th><th>Audit log</th></tr></thead>
+   <tbody>
+    <tr><td><b>Reviewer</b></td><td>Yes</td><td>Yes</td><td>Yes</td><td>No</td><td>Own actions</td></tr>
+    <tr><td><b>Inspector</b></td><td>Yes</td><td>Assigned only</td><td>Assigned only</td><td>No</td><td>Own actions</td></tr>
+    <tr><td><b>Legal officer</b></td><td>No</td><td>Yes</td><td>Yes</td><td>No</td><td>Yes</td></tr>
+    <tr><td><b>Vault officer</b></td><td>No</td><td>No</td><td>No</td><td>Yes, every access logged</td><td>Yes</td></tr>
+    <tr><td><b>Independent oversight</b></td><td>Yes</td><td>Aggregate only</td><td>No</td><td>No</td><td>Aggregate only</td></tr>
+    <tr><td><b>Telecom partner</b></td><td>No</td><td>No</td><td>No</td><td>No</td><td>No (transport only)</td></tr>
+   </tbody>
+  </table>
+ </div>
+
+ <h2 style="margin-top:2.6rem;font-size:1.5rem">Transparency report</h2>
+ <p class="small muted" style="margin-top:.4rem">Published on a fixed schedule. Sample figures below, not real data.</p>
+ <div class="grid g4" style="margin-top:1rem">
+  <div class="card"><div class="stat">412</div><p class="small muted" style="margin-top:.4rem">Community signals received</p></div>
+  <div class="card"><div class="stat">37</div><p class="small muted" style="margin-top:.4rem">Evidence-grade cases opened</p></div>
+  <div class="card"><div class="stat">31 h</div><p class="small muted" style="margin-top:.4rem">Median time to acknowledge</p></div>
+  <div class="card"><div class="stat">4.2 d</div><p class="small muted" style="margin-top:.4rem">Median time to triage</p></div>
+  <div class="card"><div class="stat">22%</div><p class="small muted" style="margin-top:.4rem">Verified cases ending in enforcement action</p></div>
+  <div class="card"><div class="stat">6%</div><p class="small muted" style="margin-top:.4rem">Reports found to be false</p></div>
+  <div class="card"><div class="stat">3</div><p class="small muted" style="margin-top:.4rem">Cases waiting past their timer</p></div>
+  <div class="card"><div class="stat">0</div><p class="small muted" style="margin-top:.4rem">Data protection incidents</p></div>
+ </div>
+
+ <h2 style="margin-top:2.6rem;font-size:1.5rem">Access and decision log</h2>
+ <p class="small muted" style="margin-top:.4rem">Every access and decision is recorded. Actions you take in the console appear here.</p>
+ <div class="card" style="margin-top:.8rem"><ul class="aud" id="aud-list"></ul></div>
+</section>
+
+<!-- ================= PILOT ================= -->
+<section data-view="pilot" hidden>
+ <h1>Pilot design</h1>
+ <p class="muted measure" style="margin-top:1rem;font-size:1.1rem">Six to twelve months, three sites, a control, and results judged against thresholds fixed before any data arrives. We scale only when the thresholds are met and NEMA has more capacity to absorb the work.</p>
+
+ <div class="grid g3" style="margin-top:1.8rem">
+  <div class="card"><h3>Lubigi wetland</h3><p class="small muted" style="margin-top:.4rem">Urban-edge site with the strongest existing pressure. Anchors the pilot.</p></div>
+  <div class="card"><h3>One rural wetland</h3><p class="small muted" style="margin-top:.4rem">Tests basic-phone and IVR reach where connectivity is thin. Site to be chosen with NEMA.</p></div>
+  <div class="card"><h3>One urban site</h3><p class="small muted" style="margin-top:.4rem">Tests smartphone capture and dense reporting. Site to be chosen with NEMA.</p></div>
+ </div>
+ <p class="small muted" style="margin-top:.8rem">Baseline data is collected first at every site, alongside a comparable control site with no platform.</p>
+
+ <ol class="tl" style="margin-top:1.8rem;max-width:44rem">
+  <li class="done"><b>Set-up</b><p class="small muted">MoU, DPIA, access model, baseline and control. Thresholds pre-registered.</p></li>
+  <li class="done"><b>Live pilot, months 3 to 9 or 12</b><p class="small muted">Both tracks at all three sites. Transparency reports on schedule.</p></li>
+  <li><b>Scale decision</b><p class="small muted">Thresholds met and capacity up: expand. Otherwise fix the bottleneck first.</p></li>
+ </ol>
+
+ <h2 style="margin-top:2.6rem;font-size:1.5rem">Pre-registered metrics</h2>
+ <p class="small muted" style="margin-top:.4rem">Starting values are placeholders to agree with NEMA. Lock them before collecting data, then enter what you observe.</p>
+ <div class="row" style="margin:.9rem 0">
+  <button class="btn a" type="button" id="p-lock">Lock thresholds</button>
+  <button class="btn g" type="button" id="p-ex">Load example results</button>
+  <button class="btn g" type="button" id="p-clear">Clear results</button>
+ </div>
+ <div class="note blue" id="p-stamp" hidden style="margin-bottom:.9rem"></div>
+ <div class="tbl-wrap">
+  <table class="pilotgrid">
+   <thead><tr><th>Metric</th><th>Rule</th><th>Threshold</th><th>Observed</th><th>Result</th></tr></thead>
+   <tbody id="p-body"></tbody>
+  </table>
+ </div>
+
+ <div class="card" style="margin-top:1.4rem">
+  <h3>Scale gate</h3>
+  <label class="chk" style="margin-top:.9rem"><input type="checkbox" id="p-cap"><span>NEMA inspection capacity has increased compared with the baseline (more inspectors or funded hours).</span></label>
+  <div id="p-gate" style="margin-top:1rem"></div>
+  <hr class="hr">
+  <p class="small muted">Safety rule: a confirmed reporter-identification incident pauses the pilot.</p>
+  <button class="btn g sm" type="button" id="p-pause" style="margin-top:.6rem" aria-pressed="false">Simulate a confirmed incident</button>
+ </div>
+</section>
+
+</div>
+</main>
+
+<footer class="foot"><div class="wrap">Wetland Watch concept prototype. Draft for discussion. It does not collect or submit real reports.</div></footer>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})};
+var hex=function(buf){return Array.prototype.map.call(new Uint8Array(buf),function(b){return b.toString(16).padStart(2,'0')}).join('')};
+async function sha256(data){try{return hex(await crypto.subtle.digest('SHA-256',data))}catch(e){return 'unavailable-in-this-browser'}}
+var clock=function(){return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})};
+
+/* ---------- router ---------- */
+var VIEWS=['report','track','console','hotspots','oversight','pilot'];
+function go(v){
+  if(VIEWS.indexOf(v)<0) v='report';
+  $$('[data-view]').forEach(function(s){s.hidden=s.dataset.view!==v});
+  $$('[data-tab]').forEach(function(b){b.setAttribute('aria-current',b.dataset.tab===v?'page':'false')});
+  try{history.replaceState(null,'','#'+v)}catch(e){}
+  if(v==='oversight') renderAudit();
+  if(v==='track') renderTrack();
+  if(v==='hotspots') drawMap();
+  window.scrollTo(0,0);
+}
+$$('[data-tab]').forEach(function(b){b.addEventListener('click',function(){go(b.dataset.tab)})});
+
+/* ---------- try-it tabs ---------- */
+function tryTab(t){
+  $$('#try-seg button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.try===t)});
+  $$('[data-try-panel]').forEach(function(p){p.hidden=p.dataset.tryPanel!==t});
+}
+$$('#try-seg button').forEach(function(b){b.addEventListener('click',function(){tryTab(b.dataset.try)})});
+$$('[data-try-open]').forEach(function(b){b.addEventListener('click',function(){
+  if($('[data-view="report"]').hidden) go('report');
+  tryTab(b.dataset.tryOpen);
+  $('#try').scrollIntoView({behavior:'smooth',block:'start'});
+})});
+
+/* ---------- Track A form ---------- */
+var recOn=false;
+$('#sig-rec').addEventListener('click',function(){
+  recOn=!recOn;this.setAttribute('aria-pressed',recOn);
+  this.textContent=recOn?'Voice note attached (demo). Tap to remove':'Record a voice note (demo)';
+  $('#sig-rec-t').textContent=recOn?'0:07 recorded, nothing is saved':'Optional';
+});
+$('#sigf').addEventListener('submit',function(e){e.preventDefault();$('#sig-form').hidden=true;$('#sig-done').hidden=false});
+$('#sig-again').addEventListener('click',function(){$('#sigf').reset();recOn=false;$('#sig-rec').textContent='Record a voice note (demo)';$('#sig-rec-t').textContent='Optional';$('#sig-form').hidden=false;$('#sig-done').hidden=true});
+
+/* ---------- Track B wizard ---------- */
+var wz={step:0,path:'pwa',safe:false,cont:false,vault:false,lang:'English',pref:'Call me back',offline:false,rec:null,busy:false,loc:'',cat:'Drainage or filling',done:false,call:[]};
+var WZ_STEPS=['Consent','Capture','Describe','Review'];
+var CALL_LINES=['Dialling the free line…','Welcome. You are recording a case with consent.','Safety check confirmed.','Recording after the tone…','Recording captured. Hashed and signed at the gateway.'];
+function shortHex(h,n){return h.length>n*2?h.slice(0,n)+'…'+h.slice(-4):h}
+function wzRender(){
+  var el=$('#wz'),html='';
+  if(wz.done){
+    var r=wz.rec||{};
+    html='<div class="note ok" style="font-size:1.05rem;font-weight:700">Case received. Sample case ID: NEMA-234</div>'+
+    '<p class="small muted" style="margin-top:.8rem">Status: Received. A human reviewer will check language, location and context. Nothing here was actually submitted.</p>'+
+    '<div class="grid g2" style="margin-top:1.2rem">'+
+     '<div class="card flat"><h3>Case record</h3><p class="small muted">What reviewers and inspectors see</p><dl class="facts" style="margin-top:.8rem;grid-template-columns:6.5rem 1fr">'+
+      '<dt>ID</dt><dd>NEMA-234</dd><dt>Issue</dt><dd>'+esc(wz.cat)+'</dd><dt>Place</dt><dd>'+esc(wz.loc||'(not entered)')+'</dd><dt>Language</dt><dd>'+esc(wz.lang)+'</dd>'+
+      '<dt>Captured</dt><dd>'+esc(r.ts||'')+'</dd><dt>Hash</dt><dd style="word-break:break-all">'+esc(shortHex(r.hash||'',10))+'</dd><dt>Signature</dt><dd style="word-break:break-all">'+esc(shortHex(r.sig||'',10))+'</dd></dl></div>'+
+     '<div class="card flat"><h3>Identity vault</h3><p class="small muted">Encrypted and stored apart</p><dl class="facts" style="margin-top:.8rem;grid-template-columns:6.5rem 1fr">'+
+      '<dt>Contact</dt><dd>Sealed ('+esc(wz.pref)+')</dd><dt>Linked by</dt><dd>Case ID only</dd><dt>Access</dt><dd>Vault officer. Restricted and logged.</dd><dt>Shown to</dt><dd>Not inspectors, not oversight</dd></dl></div>'+
+    '</div>'+
+    '<div class="row" style="margin-top:1.2rem"><button class="btn b" type="button" data-act="track">Follow this case</button><button class="btn g" type="button" data-act="restart">Start over</button></div>';
+    el.innerHTML=html;return;
+  }
+  var prog='<ol class="prog">'+WZ_STEPS.map(function(s,i){return '<li class="'+(i<wz.step?'done':i===wz.step?'now':'')+'"'+(i===wz.step?' aria-current="step"':'')+'>'+s+'</li>'}).join('')+'</ol>';
+  if(wz.step===0){
+    html=prog+'<h3>Before you start</h3><p class="small muted" style="margin-top:.3rem">A case is a formal route. It only goes ahead with your consent.</p><div class="stack" style="margin-top:1rem">'+
+    '<label class="chk"><input type="checkbox" data-k="safe" '+(wz.safe?'checked':'')+'><span><b>I am somewhere safe.</b> If reporting could put me at risk, I will stop and try later or use the anonymous signal instead.</span></label>'+
+    '<label class="chk"><input type="checkbox" data-k="cont" '+(wz.cont?'checked':'')+'><span>NEMA may contact me about this case, in the way I choose below.</span></label>'+
+    '<label class="chk"><input type="checkbox" data-k="vault" '+(wz.vault?'checked':'')+'><span>I understand my identity is stored separately in an encrypted vault and is not on the case record.</span></label>'+
+    '<div class="grid g2"><label class="f">How should we reach you?<select data-s="pref">'+['Call me back','Text message','Only when I check in'].map(function(o){return '<option'+(wz.pref===o?' selected':'')+'>'+o+'</option>'}).join('')+'</select></label>'+
+    '<label class="f">Language you will report in<select data-s="lang">'+['English','Luganda','Runyankole','Swahili','Other'].map(function(o){return '<option'+(wz.lang===o?' selected':'')+'>'+o+'</option>'}).join('')+'</select></label></div></div>'+
+    '<div class="row between" style="margin-top:1.3rem"><button class="btn o" type="button" data-act="anon">Use the anonymous signal instead</button><button class="btn b" type="button" data-act="next" id="wz-next" '+((wz.safe&&wz.cont&&wz.vault)?'':'disabled')+'>Continue</button></div>';
+  } else if(wz.step===1){
+    html=prog+'<h3>Capture evidence</h3><div class="seg" style="margin-top:.8rem" role="group" aria-label="Device"><button type="button" data-path="pwa" aria-pressed="'+(wz.path==='pwa')+'">Smartphone</button><button type="button" data-path="ivr" aria-pressed="'+(wz.path==='ivr')+'">Basic phone (0800)</button></div>';
+    if(wz.path==='pwa'){
+      html+='<p class="small muted" style="margin-top:.8rem">The app works offline. The photo, GPS accuracy and time are sealed together and signed by this device at the moment you capture. WhatsApp is only ever used to notify you.</p>'+
+      '<label class="chk" style="margin-top:1rem"><input type="checkbox" data-k="offline" '+(wz.offline?'checked':'')+'><span>Pretend I have no signal. The case is saved on the device and sent when I am back online.</span></label>'+
+      '<label class="f" style="margin-top:1rem">Choose a photo (optional, it stays in your browser)<input class="inp" type="file" accept="image/*" id="wz-file"></label>'+
+      '<div class="row" style="margin-top:1rem"><button class="btn a" type="button" data-act="capture" '+(wz.busy?'disabled':'')+'>'+(wz.rec?'Capture again':'Capture and sign')+'</button></div>';
+    } else {
+      html+='<p class="small muted" style="margin-top:.8rem">Call the toll-free 0800 line. The call records your voice. USSD is only used for the menu and callback. There is no GPS on a basic phone, so a reviewer confirms the location with you.</p>'+
+      '<div class="row" style="margin-top:1rem"><button class="btn a" type="button" data-act="call" '+(wz.busy?'disabled':'')+'>'+(wz.rec?'Simulate the call again':'Simulate the call')+'</button></div>'+
+      (wz.call.length?'<ul class="small" style="margin:1rem 0 0;padding-left:1.1rem;line-height:1.8">'+wz.call.map(function(l){return '<li>'+esc(l)+'</li>'}).join('')+'</ul>':'');
+    }
+    if(wz.rec){var r2=wz.rec;html+='<div class="card flat" style="margin-top:1.2rem"><h3>Sealed capture</h3><dl class="facts" style="margin-top:.7rem;grid-template-columns:8rem 1fr"><dt>Source</dt><dd>'+esc(r2.src)+'</dd><dt>Timestamp</dt><dd>'+esc(r2.ts)+'</dd><dt>GPS accuracy</dt><dd>'+(r2.acc==null?'None (basic phone)':'about '+r2.acc+' m (simulated)')+'</dd><dt>Capture hash</dt><dd style="word-break:break-all;font-family:ui-monospace,monospace;font-size:.8rem">'+esc(shortHex(r2.hash,16))+'</dd><dt>Device signature</dt><dd style="word-break:break-all;font-family:ui-monospace,monospace;font-size:.8rem">'+esc(shortHex(r2.sig,16))+'</dd>'+(wz.offline&&wz.path==='pwa'?'<dt>Sync</dt><dd>Queued on device</dd>':'')+'</dl></div>';}
+    html+='<div class="row between" style="margin-top:1.3rem"><button class="btn g" type="button" data-act="back">Back</button><button class="btn b" type="button" data-act="next" '+(wz.rec?'':'disabled')+'>Continue</button></div>';
+  } else if(wz.step===2){
+    html=prog+'<h3>Describe it</h3><p class="small muted" style="margin-top:.3rem">A reviewer will check the language, the place and the context. Anything a machine transcribes or translates is a working aid only, never evidence.</p><div class="stack" style="margin-top:1rem">'+
+    '<label class="f">Where is it?<textarea data-t="loc" placeholder="Landmarks, road names, how to reach it">'+esc(wz.loc)+'</textarea></label>'+
+    '<label class="f">What is happening?<select data-s="cat">'+['Drainage or filling','Dumping or pollution','Vegetation clearing','Other concern'].map(function(o){return '<option'+(wz.cat===o?' selected':'')+'>'+o+'</option>'}).join('')+'</select></label></div>'+
+    '<div class="row between" style="margin-top:1.3rem"><button class="btn g" type="button" data-act="back">Back</button><button class="btn b" type="button" data-act="next">Review</button></div>';
+  } else {
+    var r3=wz.rec||{};
+    html=prog+'<h3>Review and send</h3><dl class="facts" style="margin-top:1rem;grid-template-columns:8rem 1fr"><dt>Route</dt><dd>'+(wz.path==='pwa'?'Smartphone app':'0800 voice line')+'</dd><dt>Language</dt><dd>'+esc(wz.lang)+'</dd><dt>Issue</dt><dd>'+esc(wz.cat)+'</dd><dt>Place</dt><dd>'+esc(wz.loc||'(not entered)')+'</dd><dt>Capture hash</dt><dd style="word-break:break-all;font-family:ui-monospace,monospace;font-size:.8rem">'+esc(shortHex(r3.hash||'',16))+'</dd><dt>Updates by</dt><dd>'+esc(wz.pref)+'</dd></dl>'+
+    '<div class="note sand" style="margin-top:1rem">Machine translation is not evidence. A person will verify language, location and context before anything else happens.</div>'+
+    '<div class="row between" style="margin-top:1.3rem"><button class="btn g" type="button" data-act="back">Back</button><button class="btn b" type="button" data-act="submit">Send case (demo)</button></div>';
+  }
+  el.innerHTML=html;
+}
+async function makeCapture(file){
+  var bytes,src;
+  if(file){bytes=new Uint8Array(await file.arrayBuffer());src='Photo file, '+Math.max(1,Math.round(file.size/1024))+' KB'}
+  else{bytes=crypto.getRandomValues(new Uint8Array(48*1024));src='Sample frame, 48 KB (demo)'}
+  var ts=new Date().toISOString(),acc=Math.round(5+Math.random()*20),meta=new TextEncoder().encode('|'+ts+'|acc:'+acc);
+  var all=new Uint8Array(bytes.length+meta.length);all.set(bytes);all.set(meta,bytes.length);
+  var hash=await sha256(all.buffer),sig='unavailable-in-this-browser';
+  try{var kp=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},false,['sign']);sig=hex(await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},kp.privateKey,new TextEncoder().encode(hash)))}catch(e){}
+  return {hash:hash,sig:sig,ts:ts,acc:acc,src:src};
+}
+$('#wz').addEventListener('click',async function(e){
+  var t=e.target.closest('button');if(!t)return;
+  if(t.dataset.path){wz.path=t.dataset.path;wz.rec=null;wz.call=[];wzRender();return}
+  var a=t.dataset.act;if(!a)return;
+  if(a==='next'){wz.step++;wzRender()}
+  else if(a==='back'){wz.step--;wzRender()}
+  else if(a==='anon'){tryTab('a')}
+  else if(a==='restart'){wz={step:0,path:'pwa',safe:false,cont:false,vault:false,lang:'English',pref:'Call me back',offline:false,rec:null,busy:false,loc:'',cat:'Drainage or filling',done:false,call:[]};wzRender()}
+  else if(a==='submit'){wz.done=true;wzRender()}
+  else if(a==='track'){go('track')}
+  else if(a==='capture'){
+    wz.busy=true;wzRender();
+    var f=$('#wz-file'),file=null;
+    try{wz.rec=await makeCapture(f&&f.files&&f.files[0])}catch(err){wz.rec=await makeCapture(null)}
+    wz.busy=false;wzRender();
+  }
+  else if(a==='call'){
+    wz.busy=true;wz.call=[];wz.rec=null;wzRender();
+    for(var i=0;i<CALL_LINES.length;i++){await new Promise(function(r){setTimeout(r,550)});wz.call.push(CALL_LINES[i]);wzRender()}
+    var bytes=crypto.getRandomValues(new Uint8Array(32*1024)),ts=new Date().toISOString();
+    var hash=await sha256(bytes.buffer),sig='unavailable-in-this-browser';
+    try{var kp=await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},false,['sign']);sig=hex(await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'},kp.privateKey,new TextEncoder().encode(hash)))}catch(err){}
+    wz.rec={hash:hash,sig:sig,ts:ts,acc:null,src:'Voice recording (demo), signed at the gateway'};wz.busy=false;wzRender();
+  }
+});
+$('#wz').addEventListener('change',function(e){
+  var t=e.target;
+  if(t.dataset.k){wz[t.dataset.k]=t.checked;if(wz.step===0){var n=$('#wz-next');if(n)n.disabled=!(wz.safe&&wz.cont&&wz.vault)}}
+  else if(t.dataset.s){wz[t.dataset.s]=t.value}
+});
+$('#wz').addEventListener('input',function(e){if(e.target.dataset.t)wz[e.target.dataset.t]=e.target.value});
+wzRender();
+
+/* ---------- basic phone ---------- */
+var USSD={
+ start:{t:'Wetland Watch\n1 Send an anonymous signal\n2 Start a case (callback)\n3 Case status\n0 Exit',n:{1:'sig',2:'case',3:'stat',0:'end'}},
+ sig:{t:'What is happening?\n1 Drainage or filling\n2 Dumping or pollution\n3 Vegetation clearing\n4 Other',n:{1:'sigok',2:'sigok',3:'sigok',4:'sigok'}},
+ sigok:{t:'Received. This helps us map the problem.\n1 Allow a safe callback if this area becomes a hotspot\n0 Done',n:{1:'cb',0:'end'}},
+ cb:{t:'Thank you. Your callback choice is stored apart from the signal.',end:1},
+ 'case':{t:'A case needs your consent and a recorded call. We can call you back on the toll-free line.\n1 Request a callback\n0 Back',n:{1:'caseok',0:'start'}},
+ caseok:{t:'Callback requested. Evidence is recorded on the call, never over USSD.',end:1},
+ stat:{t:'NEMA-234\nStatus: Received\nWe never name sites or people in messages.\n0 Back',n:{0:'start'}},
+ end:{t:'Session ended.',end:1}};
+var IVR={
+ start:{t:'Welcome to Wetland Watch, a free call. Press 1 to share a community signal. Press 2 to record a case with your consent.',n:{1:'sig',2:'consent'}},
+ sig:{t:'No name needed. After the tone, say where you are and what you see. Press hash when you finish.',n:{'#':'sigok'}},
+ sigok:{t:'Received. This helps us map the problem. Goodbye.',end:1},
+ consent:{t:'For a case, NEMA may contact you, and your identity is kept apart from the case. Press 1 to agree. Press 0 to go back.',n:{1:'safe',0:'start'}},
+ safe:{t:'Are you somewhere safe right now? Press 1 for yes. Press 2 to end the call and try later.',n:{1:'rec',2:'bye'}},
+ rec:{t:'After the tone, say the place, what you see and when. Press hash to finish. Your recording is signed as it is captured.',n:{'#':'recok'}},
+ recok:{t:'Your case number is NEMA two three four. A person will check the language, the place and the context. We will only send safe updates.',end:1},
+ bye:{t:'Please stay safe. You can call again any time. Goodbye.',end:1}};
+var ph={mode:'ussd',cur:'start',log:[],msg:''};
+function phRender(){
+  var g=ph.mode==='ussd'?USSD:IVR,scr=$('#ph-screen');
+  if(ph.mode==='ussd'){scr.textContent=(ph.msg?ph.msg+'\n\n':'')+g[ph.cur].t+(g[ph.cur].end?'\n\n[Press any key to restart]':'')}
+  else{scr.innerHTML=ph.log.map(function(l){return l.you?'<div class="you">You pressed '+esc(l.t)+'</div>':'<div>'+esc(l.t)+'</div>'}).join('<br>');scr.scrollTop=scr.scrollHeight}
+}
+function phReset(){ph.cur='start';ph.msg='';ph.log=[{t:IVR.start.t}];phRender()}
+function phKey(k){
+  var g=ph.mode==='ussd'?USSD:IVR,node=g[ph.cur];
+  if(node.end){ph.cur='start';ph.msg='';ph.log=[{t:IVR.start.t}];phRender();return}
+  var nx=node.n[k];
+  if(ph.mode==='ivr')ph.log.push({t:k,you:1});
+  if(nx){ph.cur=nx;ph.msg='';if(ph.mode==='ivr')ph.log.push({t:g[nx].t})}
+  else{ph.msg='That option is not available.';if(ph.mode==='ivr'){ph.log.push({t:'Sorry, that option is not available. '+node.t})}}
+  phRender();
+}
+$('#ph-keys').innerHTML=['1','2','3','4','5','6','7','8','9','*','0','#'].map(function(k){return '<button type="button" data-k="'+k+'" aria-label="Key '+k+'">'+k+'</button>'}).join('');
+$('#ph-keys').addEventListener('click',function(e){var b=e.target.closest('button');if(b)phKey(b.dataset.k)});
+$$('#ph-seg button').forEach(function(b){b.addEventListener('click',function(){ph.mode=b.dataset.ph;$$('#ph-seg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});$('#ph-help').textContent=ph.mode==='ussd'?'USSD menu. Use the keypad. The short code is a placeholder until the telecom MoU is agreed.':'Voice call. The free number is a placeholder until the telecom MoU is agreed. Press hash to finish a recording.';phReset()})});
+$('#ph-restart').addEventListener('click',phReset);
+phReset();
+
+/* ---------- capacity ---------- */
+var cap={ins:4,hrs:24,hpc:12,dem:14,bak:9};
+function capCalc(){
+  var c=Math.floor(cap.ins*cap.hrs/cap.hpc),gap=cap.dem-c,wait=c>0?Math.round(cap.bak/c*30):null;
+  return {c:c,gap:gap,wait:wait};
+}
+function capRender(){
+  ['ins','hrs','hpc','dem','bak'].forEach(function(k){$('#c-'+k+'-o').textContent=cap[k]});
+  var r=capCalc(),mx=Math.max(r.c,cap.dem,1);
+  var over=r.gap>0;
+  $('#c-out').innerHTML=
+   '<h3>A typical month</h3>'+
+   '<div class="cmp" style="margin-top:.9rem;grid-template-columns:10rem 1fr"><span>Inspections possible</span><div class="row" style="flex-wrap:nowrap"><div class="bar" style="flex:1"><i style="width:'+(r.c/mx*100)+'%"></i></div><b>'+r.c+'</b></div>'+
+   '<span>Cases arriving</span><div class="row" style="flex-wrap:nowrap"><div class="bar '+(over?'breach':'river')+'" style="flex:1"><i style="width:'+(cap.dem/mx*100)+'%"></i></div><b>'+cap.dem+'</b></div></div>'+
+   '<div class="note '+(over?'red':'ok')+'" style="margin-top:1.1rem"><b>'+(over?'Demand is above capacity.':'Capacity covers demand.')+'</b> '+(over?'The queue grows by about '+r.gap+' a month. ':'The queue can shrink by about '+(-r.gap)+' a month. ')+'</div>'+
+   '<p style="margin-top:1rem"><b>Expected wait shown to reporters:</b> '+(r.wait==null?'cannot be estimated':'about '+r.wait+' days')+'</p>'+
+   '<p class="small muted" style="margin-top:.5rem">When the queue is full, Emergency cases go first, then Enforcement, then Referral. Every reporter still gets an acknowledgement, a triage result and an honest wait. Adding more platform channels does not help until this bar moves.</p>';
+  if(!$('[data-view="track"]').hidden) renderTrack();
+}
+['ins','hrs','hpc','dem','bak'].forEach(function(k){$('#c-'+k).addEventListener('input',function(){cap[k]=+this.value;capRender()})});
+
+/* ---------- case queue ---------- */
+var LIM={ack:48,triage:168,inspect:720,decide:336},STG=['ack','triage','inspect','decide'],SN={ack:'Acknowledge',triage:'Triage',inspect:'Inspect',decide:'Decide'};
+var CASES=[
+ {id:'NEMA-234',cat:null,ch:'App',age:3,d:{},lang:'Luganda',asr:null,dd:{geo:'No match',aud:'Not applicable',rep:'Not needed'}},
+ {id:'NEMA-233',cat:'Insufficient',ch:'0800 voice',age:200,d:{ack:12,triage:150},end:'Closed with reason, appeal window open',lang:'Runyankole',asr:[['Runyankole',.58],['English',.7]],dd:{geo:'No match',aud:'No match',rep:'Reporter confirmed'}},
+ {id:'NEMA-232',cat:'Duplicate',ch:'App',age:40,d:{ack:4,triage:30},end:'Linked to NEMA-229',lang:'English',asr:null,dd:{geo:'Match within 150 m: NEMA-229',aud:'Not applicable',rep:'Confirmed same event'}},
+ {id:'NEMA-231',cat:'Emergency',ch:'App',age:20,d:{},lang:'English',asr:null,dd:{geo:'No match',aud:'Not applicable',rep:'Pending'}},
+ {id:'NEMA-230',cat:'Enforcement',ch:'0800 voice',age:150,d:{ack:6},lang:'Luganda',asr:[['Luganda',.66],['English',.88]],dd:{geo:'No match',aud:'No match',rep:'Pending'}},
+ {id:'NEMA-229',cat:'Enforcement',ch:'App',age:900,d:{ack:8,triage:72,inspect:600},lang:'English',asr:null,dd:{geo:'Original report',aud:'Not applicable',rep:'Confirmed'}},
+ {id:'NEMA-228',cat:'Referral',ch:'0800 voice',age:60,d:{ack:10,triage:40},end:'Referred to another agency',lang:'Swahili',asr:[['Swahili',.74],['English',.82]],dd:{geo:'No match',aud:'No match',rep:'Confirmed'}},
+ {id:'NEMA-226',cat:'Enforcement',ch:'App',age:780,d:{ack:20,triage:100},lang:'English',asr:null,dd:{geo:'No match',aud:'Not applicable',rep:'Confirmed'}},
+ {id:'NEMA-225',cat:'Enforcement',ch:'0800 voice',age:900,d:{ack:5,triage:50},lang:'Luganda',asr:[['Luganda',.83],['English',.9]],dd:{geo:'No match',aud:'No match',rep:'Confirmed'}}
+];
+CASES.forEach(function(c){c.ui={ver:{lang:false,loc:false,ctx:false},sel:c.cat||'Untriaged',reason:'',elmis:null,signed:false,legal:false}});
+var CCLS={Emergency:'b-danger',Enforcement:'b-warn',Referral:'b-info',Duplicate:'b-mute',Insufficient:'b-sand',Untriaged:'b-out'};
+var AUD=[
+ {t:'09:12:04',who:'Vault officer',act:'Opened sealed contact record',c:'NEMA-229'},
+ {t:'09:31:40',who:'Reviewer 2',act:'Marked language verified',c:'NEMA-230'},
+ {t:'10:05:12',who:'Legal officer',act:'Completed legal review',c:'NEMA-229'},
+ {t:'10:44:31',who:'Reviewer 1',act:'Closed as Insufficient with reason. Reporter notified, appeal open',c:'NEMA-233'}];
+function log(id,act){AUD.unshift({t:clock(),who:'Reviewer (demo)',act:act,c:id})}
+var fmtH=function(h){return h<72?Math.round(h)+' h':(Math.round(h/24*10)/10)+' d'};
+function cstate(c){
+  if(c.end&&c.cat!=='Enforcement')return {end:c.end};
+  var used=0;STG.forEach(function(s){if(c.d[s]!=null)used+=c.d[s]});
+  var cur=STG.filter(function(s){return c.d[s]==null})[0];
+  if(!cur)return {end:'Decision recorded'};
+  var el=Math.max(0,c.age-used),r=el/LIM[cur];
+  return {stage:cur,el:el,lim:LIM[cur],r:r,st:r>=1?'breach':r>=.75?'warn':'ok'};
+}
+var filter='All',selId=null;
+function renderQueue(){
+  var cats=['All','Emergency','Enforcement','Referral','Duplicate','Insufficient','Untriaged'];
+  $('#cf').innerHTML=cats.map(function(c){var n=c==='All'?CASES.length:CASES.filter(function(x){return (x.cat||'Untriaged')===c}).length;return '<button type="button" class="chip '+(filter===c?'on':'')+'" data-f="'+c+'" aria-pressed="'+(filter===c)+'">'+c+'<b>'+n+'</b></button>'}).join('');
+  $('#cq').innerHTML=CASES.filter(function(c){return filter==='All'||(c.cat||'Untriaged')===filter}).map(function(c){
+    var s=cstate(c),cat=c.cat||'Untriaged',where,timer;
+    if(s.end){where=esc(s.end);timer='<span class="muted small">No timer</span>'}
+    else{where=SN[s.stage]+' due';var lab={ok:'On track',warn:'Due soon',breach:'Overdue'}[s.st];timer='<div class="bar '+s.st+'"><i style="width:'+Math.min(100,s.r*100)+'%"></i></div><span class="small tone-'+s.st+'"><b>'+lab+'</b>, '+fmtH(s.el)+' of '+fmtH(s.lim)+'</span>'}
+    return '<tr class="'+(selId===c.id?'sel':'')+'"><td><button class="linkbtn" type="button" data-open="'+c.id+'">'+c.id+'</button></td><td><span class="badge '+CCLS[cat]+'">'+cat+'</span></td><td>'+c.ch+'</td><td>'+where+'</td><td style="min-width:11rem">'+timer+'</td></tr>';
+  }).join('');
+}
+$('#cf').addEventListener('click',function(e){var b=e.target.closest('[data-f]');if(b){filter=b.dataset.f;renderQueue()}});
+$('#cq').addEventListener('click',function(e){var b=e.target.closest('[data-open]');if(b){selId=b.dataset.open;log(selId,'Opened case');renderQueue();renderDetail();$('#detail').scrollIntoView({behavior:'smooth',block:'start'})}});
+var TRI=['Emergency','Enforcement','Referral','Duplicate','Insufficient'];
+function renderDetail(){
+  var c=CASES.filter(function(x){return x.id===selId})[0],el=$('#detail');
+  if(!c){el.innerHTML='';return}
+  var u=c.ui,cat=c.cat||'Untriaged',allV=u.ver.lang&&u.ver.loc&&u.ver.ctx,needReason=(u.sel==='Duplicate'||u.sel==='Insufficient');
+  var coc=[['Capture hash',true],['Signed transcript',u.signed],['Inspector affidavit',c.d.inspect!=null],['Legal review',u.legal]],cn=coc.filter(function(x){return x[1]}).length;
+  var h='<div class="card"><div class="row between"><h3>'+c.id+' <span class="badge '+CCLS[cat]+'" style="vertical-align:middle">'+cat+'</span></h3><button class="btn g sm" type="button" data-d="close">Close</button></div>'+
+  '<div class="grid g2" style="margin-top:1.2rem;align-items:start"><div class="stack">'+
+   '<div><b>1. Human verification</b><p class="small muted">A reviewer confirms all three before the case moves on.</p><div class="stack" style="margin-top:.6rem">'+
+    [['lang','Language ('+esc(c.lang)+')'],['loc','Location'],['ctx','Context']].map(function(x){return '<label class="chk"><input type="checkbox" data-v="'+x[0]+'" '+(u.ver[x[0]]?'checked':'')+'><span>'+x[1]+' verified</span></label>'}).join('')+'</div></div>'+
+   '<div><b>2. Voice transcript check</b>'+(c.asr?'<p class="small muted">Machine transcript is a working aid only. Below 0.80 confidence a person transcribes it.</p><div class="cmp" style="margin-top:.6rem;grid-template-columns:7rem 1fr">'+c.asr.map(function(a){var low=a[1]<.8;return '<span>'+a[0]+'</span><div class="row" style="flex-wrap:nowrap"><div class="bar '+(low?'warn':'')+'" style="flex:1"><i style="width:'+(a[1]*100)+'%"></i></div><span class="small '+(low?'tone-warn':'')+'"><b>'+a[1].toFixed(2)+'</b>'+(low?' Human transcript needed':'')+'</span></div>'}).join('')+'</div>':'<p class="small muted">No audio on this case. Evidence is a signed photo, GPS accuracy and timestamp.</p>')+'</div>'+
+   '<div><b>3. Duplicate check</b><dl class="facts" style="margin-top:.5rem;grid-template-columns:8.5rem 1fr"><dt>Geospatial</dt><dd>'+esc(c.dd.geo)+'</dd><dt>Audio fingerprint</dt><dd>'+esc(c.dd.aud)+'</dd><dt>Reporter confirmation</dt><dd>'+esc(c.dd.rep)+'</dd></dl></div>'+
+  '</div><div class="stack">'+
+   '<div><b>4. Triage decision</b><label class="f" style="margin-top:.5rem">Category<select data-d="sel" '+(allV?'':'disabled')+'>'+(c.cat?'':'<option'+(u.sel==='Untriaged'?' selected':'')+'>Untriaged</option>')+TRI.map(function(t){return '<option'+(u.sel===t?' selected':'')+'>'+t+'</option>'}).join('')+'</select></label>'+
+    (allV?'':'<p class="small muted" style="margin-top:.4rem">Verify language, location and context to unlock triage.</p>')+
+    (needReason&&allV?'<label class="f" style="margin-top:.7rem">Reason the reporter will see<textarea data-d="reason" placeholder="Plain words, no site names or people">'+esc(u.reason)+'</textarea></label>':'')+
+    '<button class="btn a sm" type="button" data-d="triage" style="margin-top:.7rem" '+((allV&&u.sel!=='Untriaged')?'':'disabled')+'>Record triage</button>'+
+    '<p class="small muted" style="margin-top:.5rem">Nothing is rejected automatically. Duplicate and Insufficient need a written reason, notify the reporter and keep an appeal open.</p></div>'+
+   '<div><b>5. ELMIS</b><p class="small muted">Pushed through the API or middleware. No re-keying.</p><div class="row" style="margin-top:.5rem"><button class="btn b sm" type="button" data-d="elmis" '+((c.cat&&!u.elmis)?'':'disabled')+'>Send to ELMIS</button>'+(u.elmis?'<span class="badge b-ok">Synced '+u.elmis+'</span>':'<span class="small muted">'+(c.cat?'Not sent':'Triage first')+'</span>')+'</div></div>'+
+   '<div><b>6. Chain-of-custody package ('+cn+' of 4)</b><ul style="margin:.5rem 0 0;padding:0;list-style:none" class="small">'+coc.map(function(x){return '<li style="padding:.15rem 0">'+(x[1]?'<b class="tone-ok">Done</b>':'<b class="muted">Waiting</b>')+' &nbsp;'+x[0]+'</li>'}).join('')+'</ul><div class="row" style="margin-top:.6rem"><button class="btn g sm" type="button" data-d="sign" '+((allV&&!u.signed)?'':'disabled')+'>Sign transcript</button><button class="btn g sm" type="button" data-d="legal" '+((u.signed&&c.d.inspect!=null&&!u.legal)?'':'disabled')+'>Complete legal review</button></div></div>'+
+  '</div></div>'+
+  '<hr class="hr"><b>Audit trail for '+c.id+'</b><ul class="aud" style="margin-top:.5rem">'+(AUD.filter(function(a){return a.c===c.id}).slice(0,6).map(function(a){return '<li>'+a.t+'  '+esc(a.who)+': '+esc(a.act)+'</li>'}).join('')||'<li>No entries yet</li>')+'</ul></div>';
+  el.innerHTML=h;
+}
+$('#detail').addEventListener('click',function(e){
+  var b=e.target.closest('[data-d]');if(!b)return;
+  var c=CASES.filter(function(x){return x.id===selId})[0];if(!c)return;var u=c.ui,d=b.dataset.d;
+  if(b.tagName==='SELECT'||b.tagName==='TEXTAREA')return;
+  if(d==='close'){selId=null;renderQueue();renderDetail();return}
+  if(d==='triage'){
+    if((u.sel==='Duplicate'||u.sel==='Insufficient')&&!u.reason.trim()){var t=$('#detail textarea');if(t)t.focus();return}
+    c.cat=u.sel;if(u.sel==='Duplicate'||u.sel==='Insufficient'){c.end=u.sel==='Duplicate'?'Linked to an earlier case':'Closed with reason, appeal window open'}else if(u.sel==='Referral'){c.end='Referred to another agency'}else{delete c.end}
+    if(c.d.ack==null)c.d.ack=Math.min(c.age,4);if(c.d.triage==null)c.d.triage=Math.max(0,Math.min(c.age-c.d.ack,2));
+    log(c.id,'Triaged as '+u.sel+(needReasonText(u)?'. Reason recorded, reporter notified, appeal open':''));
+  }
+  if(d==='elmis'){u.elmis='ELMIS-'+Math.floor(100000+Math.random()*900000);log(c.id,'Sent to ELMIS ('+u.elmis+')')}
+  if(d==='sign'){u.signed=true;log(c.id,'Signed verified transcript')}
+  if(d==='legal'){u.legal=true;log(c.id,'Completed legal review')}
+  renderQueue();renderDetail();
+});
+function needReasonText(u){return u.sel==='Duplicate'||u.sel==='Insufficient'}
+$('#detail').addEventListener('change',function(e){
+  var c=CASES.filter(function(x){return x.id===selId})[0];if(!c)return;var t=e.target;
+  if(t.dataset.v){c.ui.ver[t.dataset.v]=t.checked;log(c.id,(t.checked?'Verified ':'Unverified ')+({lang:'language',loc:'location',ctx:'context'})[t.dataset.v]);renderDetail()}
+  else if(t.dataset.d==='sel'){c.ui.sel=t.value;renderDetail()}
+});
+$('#detail').addEventListener('input',function(e){if(e.target.dataset.d==='reason'){var c=CASES.filter(function(x){return x.id===selId})[0];if(c)c.ui.reason=e.target.value}});
+
+/* ---------- track ---------- */
+var trSt=0;
+function renderTrack(){
+  var id=($('#tr-id').value||'').trim().toUpperCase(),ok=/^NEMA-\d+$/.test(id);
+  $('#tr-hint').hidden=ok||!id;
+  var showId=ok?id:'NEMA-234',wait=capCalc().wait,w=wait==null?'longer than usual':'about '+wait+' days',disc=$('#tr-disc').checked;
+  var lab=['Received','Assigned to a reviewer',['Action taken','No action, with a reason'][trSt===3?1:0]],steps=[];
+  var done=trSt===0?1:trSt===1?2:3;
+  $('#tr-tl').innerHTML=lab.map(function(l,i){return '<li class="'+(i<done?(i===2&&trSt===3?'bad':'done'):'')+'"><b>'+(i<done?'':'Next: ')+l+'</b>'+(i===0?'<p class="small muted">The report is acknowledged.</p>':i===1?'<p class="small muted">A person checks language, location and context, and sets the route and urgency.</p>':'<p class="small muted">The decision and its reason are recorded.</p>')+'</li>'}).join('');
+  var msg=disc?'Reference '+showId+': there is an update. Call the free line when it is safe to talk.':
+   ['Wetland Watch: report '+showId+' was received. Expected wait: '+w+'.','Wetland Watch: '+showId+' has been assigned to a reviewer.','Wetland Watch: action was taken on '+showId+'. Thank you for helping protect wetlands.','Wetland Watch: no action on '+showId+' at this time. Reason: not enough information to confirm the location. You can appeal or add detail.'][trSt];
+  $('#tr-sms').textContent=msg;
+  $('#tr-wait').innerHTML='<b>Expected wait right now: '+w+'.</b> This comes from the current inspection queue on the NEMA console, and changes when capacity does.';
+  var ap=$('#tr-appeal');
+  if(trSt===3){if(!ap.dataset.sent){ap.hidden=false;ap.innerHTML='<div class="note sand"><b>You can appeal.</b> A different reviewer will read it.</div><button class="btn o sm" type="button" id="tr-ap-b" style="margin-top:.7rem">Appeal this decision</button>'}}
+  else{ap.hidden=true;ap.dataset.sent='';ap.innerHTML=''}
+}
+$('#tr-seg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;trSt=+b.dataset.st;$$('#tr-seg button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});$('#tr-appeal').dataset.sent='';renderTrack()});
+$('#tr-id').addEventListener('input',renderTrack);$('#tr-disc').addEventListener('change',renderTrack);
+$('#tr-appeal').addEventListener('click',function(e){
+  if(e.target.id==='tr-ap-b'){this.innerHTML='<label class="f">Why do you disagree? (optional)<textarea placeholder="Add anything that could help"></textarea></label><button class="btn b sm" type="button" id="tr-ap-s" style="margin-top:.7rem">Send appeal (demo)</button>'}
+  else if(e.target.id==='tr-ap-s'){this.dataset.sent='1';this.innerHTML='<div class="note ok"><b>Appeal logged.</b> A different reviewer will look at it and you will get a reply with a reason. Nothing was sent in this demo.</div>'}
+});
+
+/* ---------- hotspots ---------- */
+var CL=[
+ {id:'A',name:'Lubigi, north edge',x:160,y:130,c:{30:9,60:14,90:21},cat:'Drainage or filling',ch:{'Smartphone app':25,'0800 voice':40,USSD:25,WhatsApp:10}},
+ {id:'B',name:'Lubigi, channel bend',x:320,y:215,c:{30:5,60:8,90:11},cat:'Dumping or pollution',ch:{'Smartphone app':35,'0800 voice':30,USSD:20,WhatsApp:15}},
+ {id:'C',name:'Rural wetland site',x:480,y:95,c:{30:3,60:5,90:9},cat:'Vegetation clearing',ch:{'Smartphone app':5,'0800 voice':60,USSD:30,WhatsApp:5}},
+ {id:'D',name:'Urban site, east bank',x:450,y:305,c:{30:7,60:10,90:15},cat:'Dumping or pollution',ch:{'Smartphone app':55,'0800 voice':10,USSD:5,WhatsApp:30}},
+ {id:'E',name:'Southern fringe',x:120,y:320,c:{30:2,60:4,90:6},cat:'Other concern',ch:{'Smartphone app':20,'0800 voice':40,USSD:30,WhatsApp:10}}];
+var hs={n:6,w:30,sel:null};
+function drawMap(){
+  $('#hs-n-o').textContent=hs.n;
+  $('#hs-rule').innerHTML='A hotspot forms when <b>'+hs.n+' or more independent signals</b> fall within 300 m in <b>'+hs.w+' days</b>. The rule is published, and the same for every site.';
+  var svg='<path d="M-20 120C90 60 140 150 230 110S350 30 460 90 560 130 620 66" fill="none" stroke="var(--water)" stroke-width="30" stroke-linecap="round"/><path d="M-20 300C70 240 150 340 250 285S390 205 490 275 570 300 620 240" fill="none" stroke="var(--water)" stroke-width="22" stroke-linecap="round"/><path d="M340 84C325 150 360 185 415 198S446 250 405 300" fill="none" stroke="var(--water2)" stroke-width="9" stroke-linecap="round"/><ellipse cx="170" cy="200" rx="70" ry="34" fill="var(--land2)"/><ellipse cx="400" cy="210" rx="80" ry="36" fill="var(--land)"/><ellipse cx="80" cy="60" rx="40" ry="22" fill="var(--land)"/>';
+  CL.forEach(function(k){
+    var n=k.c[hs.w];if(n<3)return;var hot=n>=hs.n,r=10+Math.sqrt(n)*5,on=hs.sel===k.id;
+    svg+='<g class="cl" tabindex="0" role="button" data-cl="'+k.id+'" aria-label="'+k.name+', '+n+' signals, '+(hot?'hotspot':'watching')+'"><circle cx="'+k.x+'" cy="'+k.y+'" r="'+r+'" fill="'+(hot?'var(--green)':'var(--surface)')+'" fill-opacity="'+(hot?.85:.7)+'" stroke="'+(on?'var(--focus)':hot?'var(--on-green)':'var(--muted)')+'" stroke-width="'+(on?5:2.5)+'" '+(hot?'':'stroke-dasharray="5 4"')+'/><text x="'+k.x+'" y="'+(k.y+5)+'" text-anchor="middle" font-size="15" font-weight="700" fill="'+(hot?'var(--on-green)':'var(--ink)')+'" style="pointer-events:none">'+n+'</text></g>';
+  });
+  $('#hs-map').innerHTML=svg;
+  hsDetail();
+}
+function hsDetail(){
+  var k=CL.filter(function(x){return x.id===hs.sel})[0],el=$('#hs-detail');
+  if(!k||k.c[hs.w]<3){el.innerHTML='<p class="muted small">Select an area on the map to see its summary.</p>';return}
+  var n=k.c[hs.w],hot=n>=hs.n;
+  el.innerHTML='<div class="row between"><h3>'+k.name+'</h3><span class="badge '+(hot?'b-ok':'b-mute')+'">'+(hot?'Hotspot':'Watching')+'</span></div>'+
+   '<p style="margin-top:.6rem"><b>'+n+' signals</b> in '+hs.w+' days. Most common concern: '+k.cat+'.</p>'+
+   '<p class="small muted" style="margin-top:.8rem">Channel mix</p><div class="cmp" style="margin-top:.4rem;grid-template-columns:8rem 1fr">'+Object.keys(k.ch).map(function(c){return '<span>'+c+'</span><div class="row" style="flex-wrap:nowrap"><div class="bar river" style="flex:1"><i style="width:'+k.ch[c]+'%"></i></div><span class="small">'+k.ch[c]+'%</span></div>'}).join('')+'</div>'+
+   (hot?'<div class="note blue" style="margin-top:1rem"><b>Rule met.</b> The summary is published. People who opted in to a safe callback can be invited to add evidence through the consent-based case route. No one is obliged to.</div><button class="btn b sm" type="button" id="hs-inv" style="margin-top:.8rem">Invite opted-in reporters (demo)</button>':'<div class="note sand" style="margin-top:1rem">Below the rule, so this stays a counted area only. It never becomes a case on its own.</div>');
+}
+$('#hs-map').addEventListener('click',function(e){var g=e.target.closest('[data-cl]');if(g){hs.sel=g.dataset.cl;drawMap()}});
+$('#hs-map').addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){var g=e.target.closest('[data-cl]');if(g){e.preventDefault();hs.sel=g.dataset.cl;drawMap();var again=$('[data-cl="'+hs.sel+'"]');if(again)again.focus()}}});
+$('#hs-n').addEventListener('input',function(){hs.n=+this.value;drawMap()});
+$$('#hs-w button').forEach(function(b){b.addEventListener('click',function(){hs.w=+b.dataset.w;$$('#hs-w button').forEach(function(x){x.setAttribute('aria-pressed',x===b)});drawMap()})});
+$('#hs-detail').addEventListener('click',function(e){if(e.target.id==='hs-inv'){e.target.outerHTML='<div class="note ok" style="margin-top:.8rem">Invitations queued (demo). They go only to people who opted in, in the way they chose.</div>'}});
+
+/* ---------- oversight ---------- */
+var GATES=[['MoU signed by NEMA, telecoms, Data Protection Office, civil society and judiciary',true],['Data protection impact assessment completed',false],['Retention schedule and legal hold procedure adopted',false],['Role-based access and access logging switched on',true],['Reporter protection policy and legal support route in place',false],['Bias audit baseline for clustering and reputation done',false],['Metrics and thresholds pre-registered',false]];
+function renderGates(){
+  var n=GATES.filter(function(g){return g[1]}).length;
+  $('#gate-badge').textContent=n===GATES.length?'Ready to start':n+' of '+GATES.length+' ready';
+  $('#gate-badge').className='badge '+(n===GATES.length?'b-ok':'b-warn');
+  $('#gates').innerHTML=GATES.map(function(g,i){return '<label class="chk"><input type="checkbox" data-g="'+i+'" '+(g[1]?'checked':'')+'><span>'+g[0]+'</span></label>'}).join('');
+}
+$('#gates').addEventListener('change',function(e){var i=e.target.dataset.g;if(i!=null){GATES[i][1]=e.target.checked;renderGates()}});
+function renderAudit(){$('#aud-list').innerHTML=AUD.slice(0,14).map(function(a){return '<li>'+a.t+'  '+esc(a.who)+': '+esc(a.act)+' ['+a.c+']</li>'}).join('')}
+
+/* ---------- pilot ---------- */
+var MET=[
+ {n:'Time to acknowledge',u:'hours, 90th percentile',dir:'max',th:48,ex:41},
+ {n:'Time to triage',u:'days, 90th percentile',dir:'max',th:7,ex:6},
+ {n:'Time to inspection (Emergency and Enforcement)',u:'days, 90th percentile',dir:'max',th:30,ex:38},
+ {n:'Enforcement rate above control',u:'% of verified cases',dir:'min',th:15,ex:19},
+ {n:'False-report rate',u:'% of reports',dir:'max',th:10,ex:7},
+ {n:'Cost per verified case',u:"UGX thousands",dir:'max',th:300,ex:280},
+ {n:'Inspector hours per verified case',u:'hours',dir:'max',th:14,ex:13},
+ {n:'Reporter safety incidents, unresolved',u:'count',dir:'max',th:0,ex:0}];
+MET.forEach(function(m){m.obs=''});
+var pl={locked:false,paused:false};
+function metRes(m){if(m.obs===''||isNaN(+m.obs))return null;return m.dir==='max'?(+m.obs<=+m.th):(+m.obs>=+m.th)}
+function renderPilot(){
+  $('#p-body').innerHTML=MET.map(function(m,i){
+    return '<tr><td><b>'+m.n+'</b><div class="small muted">'+m.u+'</div></td><td>'+(m.dir==='max'?'At or below':'At or above')+'</td><td><input type="number" min="0" data-th="'+i+'" value="'+m.th+'" '+(pl.locked?'disabled':'')+' aria-label="Threshold for '+esc(m.n)+'"></td><td><input type="number" min="0" data-ob="'+i+'" value="'+m.obs+'" aria-label="Observed value for '+esc(m.n)+'"></td><td id="mr'+i+'"></td></tr>';
+  }).join('');
+  pilotStatus();
+}
+function pilotStatus(){
+  MET.forEach(function(m,i){var r=metRes(m),el=$('#mr'+i);if(el)el.innerHTML=r===null?'<span class="muted">Waiting for data</span>':r?'<span class="badge b-ok">Met</span>':'<span class="badge b-danger">Not met</span>'});
+  var miss=MET.filter(function(m){return metRes(m)===null}),fails=MET.filter(function(m){return metRes(m)===false}),capUp=$('#p-cap').checked,g=$('#p-gate'),h;
+  if(pl.paused)h='<div class="note red"><b>Paused.</b> A confirmed reporter-identification incident stops promotion to inspection until it is investigated and safeguards are fixed. No scaling decision can be made.</div>';
+  else if(!pl.locked)h='<div class="note sand"><b>Lock the thresholds first.</b> Results only count against thresholds fixed before the data.</div>';
+  else if(miss.length)h='<div class="note blue"><b>Waiting for data</b> on '+miss.length+' of '+MET.length+' metrics.</div>';
+  else if(fails.length)h='<div class="note red"><b>Fix the bottleneck first.</b> Not met: '+fails.map(function(m){return m.n}).join('; ')+'. Scaling now would add reports to a process that is not keeping its promises.</div>';
+  else if(!capUp)h='<div class="note sand"><b>Hold.</b> Every threshold is met, but NEMA capacity has not increased. More reports would only lengthen the queue.</div>';
+  else h='<div class="note ok"><b>Ready to scale.</b> Thresholds are met and capacity has grown. Plan the next sites with NEMA and keep the same reporting rules.</div>';
+  g.innerHTML=h;
+}
+$('#p-body').addEventListener('input',function(e){var t=e.target;if(t.dataset.th!=null)MET[t.dataset.th].th=t.value;if(t.dataset.ob!=null)MET[t.dataset.ob].obs=t.value;pilotStatus()});
+$('#p-cap').addEventListener('change',pilotStatus);
+$('#p-ex').addEventListener('click',function(){MET.forEach(function(m){m.obs=String(m.ex)});renderPilot()});
+$('#p-clear').addEventListener('click',function(){MET.forEach(function(m){m.obs=''});renderPilot()});
+$('#p-lock').addEventListener('click',async function(){
+  var st=$('#p-stamp');
+  if(!pl.locked){
+    var ts=new Date().toISOString(),h=await sha256(new TextEncoder().encode(JSON.stringify(MET.map(function(m){return [m.n,m.dir,m.th]}))+ts).buffer);
+    pl.locked=true;this.textContent='Amend thresholds (logged)';
+    st.hidden=false;st.innerHTML='<b>Pre-registered</b> '+esc(ts)+'. Fingerprint '+esc(shortHex(h,12))+'. Any change from here is logged as an amendment.';
+    AUD.unshift({t:clock(),who:'Pilot lead (demo)',act:'Locked pilot thresholds, fingerprint '+shortHex(h,6),c:'PILOT'});
+  } else {
+    pl.locked=false;this.textContent='Lock thresholds';st.hidden=false;st.innerHTML='<b>Amendment logged.</b> Thresholds are open for change and must be locked again with a new fingerprint.';
+    AUD.unshift({t:clock(),who:'Pilot lead (demo)',act:'Opened thresholds for amendment',c:'PILOT'});
+  }
+  renderPilot();
+});
+$('#p-pause').addEventListener('click',function(){
+  pl.paused=!pl.paused;this.setAttribute('aria-pressed',pl.paused);this.textContent=pl.paused?'Clear the incident (demo)':'Simulate a confirmed incident';
+  $('#pause-banner').hidden=!pl.paused;
+  AUD.unshift({t:clock(),who:'System',act:pl.paused?'Pilot paused after confirmed reporter-identification incident':'Pilot resumed after review',c:'PILOT'});
+  pilotStatus();
+});
+
+/* ---------- init ---------- */
+capRender();renderQueue();renderGates();renderPilot();renderTrack();
+var start=(location.hash||'').slice(1);
+go(VIEWS.indexOf(start)>=0?start:'report');
+})();
+</script>
+</body>
+</html>
