@@ -1,0 +1,56 @@
+{
+  "user1": {
+    "score": 0,
+    "verifiedCount": 2,
+    "history": [
+      {
+        "event": "duplicate_upload",
+        "reportId": null,
+        "at": 1791367720096,
+        "scoreAfter": 30
+      },
+      {
+        "event": "repeated_location_flag",
+        "reportId": null,
+        "at": 1791367720102,
+        "scoreAfter": 27
+      },
+      {
+        "event": "retake_requested",
+        "reportId": null,
+        "at": 1791367720110,
+        "scoreAfter": 27
+      },
+      {
+        "event": "report_verified",
+        "reportId": "64e8968d-6849-4d2e-8701-e312c6c5ef8b",
+        "at": 1791367720112,
+        "scoreAfter": 29.3
+      },
+      {
+        "event": "confirmed_by_other",
+        "reportId": "64e8968d-6849-4d2e-8701-e312c6c5ef8b",
+        "at": 1791367720115,
+        "scoreAfter": 30.8
+      },
+      {
+        "event": "report_dismissed",
+        "reportId": "a0c911dd-988e-41a0-a89f-aa9595f061d6",
+        "at": 1791367720130,
+        "scoreAfter": 22.8
+      },
+      {
+        "event": "report_verified",
+        "reportId": "4f29bf85-833e-406a-9661-7d69adcf2541",
+        "at": 1791367720149,
+        "scoreAfter": 25.2
+      },
+      {
+        "event": "audit_failed",
+        "reportId": "4f29bf85-833e-406a-9661-7d69adcf2541",
+        "at": 1791367720153,
+        "scoreAfter": 0
+      }
+    ]
+  }
+}

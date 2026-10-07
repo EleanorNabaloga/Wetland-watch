@@ -1,0 +1,59 @@
+[
+  {
+    "id": "64e8968d-6849-4d2e-8701-e312c6c5ef8b",
+    "reporterId": "user1",
+    "lat": 0.335,
+    "lng": 32.535,
+    "accuracyM": 8,
+    "capturedAt": 1791367710081,
+    "wetland": "SAMPLE ONLY - replace with real NEMA boundary",
+    "status": "verified",
+    "flags": [],
+    "reporterLevel": "new",
+    "review": "human review of every report",
+    "rewardStatus": "payable",
+    "rewardAmount": 1,
+    "confirmations": [
+      "user2"
+    ],
+    "createdAt": 1791367720092,
+    "reviewedAt": 1791367720111
+  },
+  {
+    "id": "a0c911dd-988e-41a0-a89f-aa9595f061d6",
+    "reporterId": "user1",
+    "lat": 0.335,
+    "lng": 32.535,
+    "accuracyM": 8,
+    "capturedAt": 1791367710117,
+    "wetland": "SAMPLE ONLY - replace with real NEMA boundary",
+    "status": "dismissed",
+    "flags": [],
+    "reporterLevel": "new",
+    "review": "human review of every report",
+    "rewardStatus": "none",
+    "rewardAmount": 0,
+    "confirmations": [],
+    "createdAt": 1791367720126,
+    "reviewedAt": 1791367720128
+  },
+  {
+    "id": "4f29bf85-833e-406a-9661-7d69adcf2541",
+    "reporterId": "user1",
+    "lat": 0.335,
+    "lng": 32.535,
+    "accuracyM": 8,
+    "capturedAt": 1791367710133,
+    "wetland": "SAMPLE ONLY - replace with real NEMA boundary",
+    "status": "verified",
+    "flags": [],
+    "reporterLevel": "new",
+    "review": "human review of every report",
+    "rewardStatus": "cancelled",
+    "rewardAmount": 0,
+    "confirmations": [],
+    "createdAt": 1791367720146,
+    "reviewedAt": 1791367720148,
+    "audit": "failed"
+  }
+]

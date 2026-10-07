@@ -1,0 +1,11 @@
+{
+  "type": "FeatureCollection",
+  "features": [{
+    "type": "Feature",
+    "properties": { "name": "SAMPLE ONLY - replace with real NEMA boundary" },
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [[[32.530,0.330],[32.540,0.330],[32.540,0.340],[32.530,0.340],[32.530,0.330]]]
+    }
+  }]
+}
