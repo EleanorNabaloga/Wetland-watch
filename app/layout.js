@@ -2,9 +2,9 @@ import { I18nProvider } from "@/lib/i18n";
 import "./globals.css";
 
 export const metadata = {
-  title: "Wetland Watch: report pollution",
+  title: "Kuuma Obutonde: report pollution",
   description:
-    "Take a photo of wetland pollution. We record where you are. NEMA reviews it.",
+    "Take a photo of pollution or damage to the environment, in a street, market, wetland or anywhere else. We record where you are. NEMA reviews it.",
 };
 
 export const viewport = {

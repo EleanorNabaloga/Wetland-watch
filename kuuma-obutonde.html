@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Wetland Watch: signals, cases and NEMA capacity</title>
+<title>Kuuma Obutonde: signals, cases and NEMA capacity</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -156,7 +156,7 @@ svg.map .cl{cursor:pointer}
  <div class="wrap topbar">
   <div class="brand">
    <svg viewBox="0 0 36 36" aria-hidden="true"><rect width="36" height="36" rx="10" fill="var(--green)"/><path d="M6 15c4-4 6 4 10 0s6-4 14 0M6 23c4-4 6 4 10 0s6-4 14 0" fill="none" stroke="var(--on-green)" stroke-width="2.4" stroke-linecap="round"/></svg>
-   <span>Wetland Watch</span>
+   <span>Kuuma Obutonde</span>
   </div>
   <nav class="tabs" aria-label="Sections">
    <button type="button" data-tab="report">Report</button>
@@ -531,7 +531,7 @@ svg.map .cl{cursor:pointer}
 </div>
 </main>
 
-<footer class="foot"><div class="wrap">Wetland Watch concept prototype. Draft for discussion. It does not collect or submit real reports.</div></footer>
+<footer class="foot"><div class="wrap">Kuuma Obutonde concept prototype. Draft for discussion. It does not collect or submit real reports.</div></footer>
 
 <script>
 (function(){
@@ -680,7 +680,7 @@ wzRender();
 
 /* ---------- basic phone ---------- */
 var USSD={
- start:{t:'Wetland Watch\n1 Send an anonymous signal\n2 Start a case (callback)\n3 Case status\n0 Exit',n:{1:'sig',2:'case',3:'stat',0:'end'}},
+ start:{t:'Kuuma Obutonde\n1 Send an anonymous signal\n2 Start a case (callback)\n3 Case status\n0 Exit',n:{1:'sig',2:'case',3:'stat',0:'end'}},
  sig:{t:'What is happening?\n1 Drainage or filling\n2 Dumping or pollution\n3 Vegetation clearing\n4 Other',n:{1:'sigok',2:'sigok',3:'sigok',4:'sigok'}},
  sigok:{t:'Received. This helps us map the problem.\n1 Allow a safe callback if this area becomes a hotspot\n0 Done',n:{1:'cb',0:'end'}},
  cb:{t:'Thank you. Your callback choice is stored apart from the signal.',end:1},
@@ -689,7 +689,7 @@ var USSD={
  stat:{t:'NEMA-234\nStatus: Received\nWe never name sites or people in messages.\n0 Back',n:{0:'start'}},
  end:{t:'Session ended.',end:1}};
 var IVR={
- start:{t:'Welcome to Wetland Watch, a free call. Press 1 to share a community signal. Press 2 to record a case with your consent.',n:{1:'sig',2:'consent'}},
+ start:{t:'Welcome to Kuuma Obutonde, a free call. Press 1 to share a community signal. Press 2 to record a case with your consent.',n:{1:'sig',2:'consent'}},
  sig:{t:'No name needed. After the tone, say where you are and what you see. Press hash when you finish.',n:{'#':'sigok'}},
  sigok:{t:'Received. This helps us map the problem. Goodbye.',end:1},
  consent:{t:'For a case, NEMA may contact you, and your identity is kept apart from the case. Press 1 to agree. Press 0 to go back.',n:{1:'safe',0:'start'}},
@@ -841,7 +841,7 @@ function renderTrack(){
   var done=trSt===0?1:trSt===1?2:3;
   $('#tr-tl').innerHTML=lab.map(function(l,i){return '<li class="'+(i<done?(i===2&&trSt===3?'bad':'done'):'')+'"><b>'+(i<done?'':'Next: ')+l+'</b>'+(i===0?'<p class="small muted">The report is acknowledged.</p>':i===1?'<p class="small muted">A person checks language, location and context, and sets the route and urgency.</p>':'<p class="small muted">The decision and its reason are recorded.</p>')+'</li>'}).join('');
   var msg=disc?'Reference '+showId+': there is an update. Call the free line when it is safe to talk.':
-   ['Wetland Watch: report '+showId+' was received. Expected wait: '+w+'.','Wetland Watch: '+showId+' has been assigned to a reviewer.','Wetland Watch: action was taken on '+showId+'. Thank you for helping protect wetlands.','Wetland Watch: no action on '+showId+' at this time. Reason: not enough information to confirm the location. You can appeal or add detail.'][trSt];
+   ['Kuuma Obutonde: report '+showId+' was received. Expected wait: '+w+'.','Kuuma Obutonde: '+showId+' has been assigned to a reviewer.','Kuuma Obutonde: action was taken on '+showId+'. Thank you for helping protect wetlands.','Kuuma Obutonde: no action on '+showId+' at this time. Reason: not enough information to confirm the location. You can appeal or add detail.'][trSt];
   $('#tr-sms').textContent=msg;
   $('#tr-wait').innerHTML='<b>Expected wait right now: '+w+'.</b> This comes from the current inspection queue on the NEMA console, and changes when capacity does.';
   var ap=$('#tr-appeal');

@@ -1,4 +1,4 @@
-const CACHE_NAME = "wetland-watch-v1";
+const CACHE_NAME = "kuuma-obutonde-v1";
 
 // Install event: cache core static assets
 self.addEventListener("install", (event) => {

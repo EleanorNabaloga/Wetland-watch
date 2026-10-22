@@ -1,4 +1,4 @@
-# Wetland Watch Reporter App: design spec
+# Kuuma Obutonde Reporter App: design spec
 
 This project contains only the public reporter experience. NEMA staff workflows, review controls, and dashboard operations belong to the separate `wetland-nema` project.
 

@@ -1,6 +1,6 @@
-# Wetland Watch Reporter
+# Kuuma Obutonde Reporter
 
-The public-facing app lets community members photograph wetland pollution, attach a location, submit a report, check its status, and claim an available reward. NEMA staff tools live in the separate `wetland-nema` project.
+The public-facing app lets community members photograph pollution or damage to the environment on wet or dry land (streets, slums, markets, wetlands, rivers), attach a location, submit a report, check its status, and claim an available reward. NEMA staff tools live in the separate `wetland-nema` project.
 
 ## Run locally
 

@@ -5,7 +5,7 @@ import { useT } from "@/lib/i18n";
 import { resizeImage } from "@/lib/image";
 import { readExif } from "@/lib/exif";
 import { sha256 } from "@/lib/hash";
-import { ago } from "@/lib/format";
+import { OUTCOME_EN } from "@/lib/constants";
 import {
   saveOfflineReport,
   getOfflineReports,
@@ -13,12 +13,17 @@ import {
 } from "@/lib/offline";
 import { signEvidence } from "@/lib/device";
 
+// Covers both wet and dry land: streets, slums, markets, wetlands, rivers, forests.
+// "value" is saved in English for NEMA (must match TYPES in lib/db.js); "key" is the label shown.
 const TYPES = [
-  "Rubbish or waste",
-  "Sewage",
-  "Oil or chemicals",
-  "Dumping or filling",
-  "Other",
+  { value: "Rubbish or waste", key: "type.rubbish" },
+  { value: "Sewage", key: "type.sewage" },
+  { value: "Oil or chemicals", key: "type.oil" },
+  { value: "Dumping or filling", key: "type.dumping" },
+  { value: "Blocked drainage", key: "type.drainage" },
+  { value: "Open burning or smoke", key: "type.burning" },
+  { value: "Cutting trees or vegetation", key: "type.trees" },
+  { value: "Other", key: "type.other" },
 ];
 const MINE_KEY = "ww_mine";
 const JSON_HEADERS = { "Content-Type": "application/json" };
@@ -41,25 +46,64 @@ const addMine = (report) =>
   );
 const tokenFor = (id) => getMine().find((item) => item.id === id)?.token;
 
+// GPS state is kept as a kind plus data, and turned into words at render time,
+// so the text follows the chosen language.
 function describeFix(p) {
-  const a = Math.round(p.acc);
-  const c = `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`;
-  const sourceNote = p.fromUploadedPhoto
-    ? " · Photo has no saved GPS; this is your current location."
-    : "";
-  return a <= 30
-    ? {
-        state: "good",
-        title: "Location captured",
-        sub: `${c} · accurate to ±${a} m${sourceNote}`,
-        retry: false,
-      }
-    : {
-        state: "weak",
-        title: `Location is rough (±${a} m)`,
-        sub: `${c} · move to open sky and try again${sourceNote}`,
-        retry: true,
-      };
+  const good = Math.round(p.acc) <= 30;
+  return { state: good ? "good" : "weak", kind: "fix", fix: p, retry: !good };
+}
+
+function gpsText(g, t) {
+  switch (g.kind) {
+    case "none":
+      return { title: t("gps.none"), sub: "" };
+    case "denied":
+      return { title: t("gps.denied"), sub: t("gps.deniedSub") };
+    case "fail":
+      return { title: t("gps.fail"), sub: t("gps.failSub") };
+    case "photo": {
+      const c = `${g.lat.toFixed(5)}, ${g.lng.toFixed(5)}`;
+      const when = g.takenAt
+        ? t("gps.captured", { d: new Date(g.takenAt).toLocaleString() })
+        : t("gps.noTime");
+      return { title: t("gps.fromPhoto"), sub: `${c} · ${when}` };
+    }
+    case "fix": {
+      const p = g.fix;
+      const a = Math.round(p.acc);
+      const c = `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`;
+      const note = p.fromUploadedPhoto ? " · " + t("gps.noPhotoGps") : "";
+      return a <= 30
+        ? { title: t("gps.good"), sub: `${c} · ${t("gps.acc", { a })}${note}` }
+        : { title: t("gps.weak", { a }), sub: `${c} · ${t("gps.weakSub")}${note}` };
+    }
+    default:
+      return { title: t("gps.wait"), sub: t("gps.waitSub") };
+  }
+}
+
+function agoText(ts, t) {
+  const s = Math.round((Date.now() - ts) / 1000);
+  if (s < 60) return t("time.now");
+  if (s < 3600) return t("time.min", { n: Math.round(s / 60) });
+  if (s < 86400) return t("time.hours", { n: Math.round(s / 3600) });
+  return new Date(ts).toLocaleDateString();
+}
+
+// NEMA saves the outcome in English; show it in the reporter's language when we know it.
+function outcomeText(outcome, t) {
+  const key = Object.keys(OUTCOME_EN).find((k) => k && OUTCOME_EN[k] === outcome);
+  return key ? t("outcome." + key) : outcome;
+}
+
+// Turn a refused send into a message in the reporter's language.
+function sendErrorText(status, result, t) {
+  if (status === 409)
+    return String(result.reason || "").includes("elsewhere")
+      ? t("notice.duplicateElsewhere")
+      : t("notice.duplicate");
+  if (status === 429) return t("notice.tooMany");
+  return t("notice.sendFail");
 }
 
 export default function Reporter() {
@@ -69,12 +113,7 @@ export default function Reporter() {
   const [photo, setPhoto] = useState(null);
   const [photoMeta, setPhotoMeta] = useState(null);
   const [pos, setPos] = useState(null);
-  const [gps, setGps] = useState({
-    state: "wait",
-    title: "",
-    sub: "",
-    retry: false,
-  });
+  const [gps, setGps] = useState({ state: "wait", kind: "wait", retry: false });
   const [type, setType] = useState("");
   const [note, setNote] = useState("");
   const [sending, setSending] = useState(false);
@@ -100,20 +139,10 @@ export default function Reporter() {
       best.current = null;
       setPos(null);
       if (!("geolocation" in navigator)) {
-        setGps({
-          state: "bad",
-          title: "Location is not available on this device",
-          sub: "",
-          retry: false,
-        });
+        setGps({ state: "bad", kind: "none", retry: false });
         return;
       }
-      setGps({
-        state: "wait",
-        title: "Getting your location…",
-        sub: "Stay where you took the photo.",
-        retry: false,
-      });
+      setGps({ state: "wait", kind: "wait", retry: false });
       const t0 = Date.now();
       watchId.current = navigator.geolocation.watchPosition(
         (p) => {
@@ -132,30 +161,14 @@ export default function Reporter() {
         },
         (err) => {
           stopGps();
-          setGps({
-            state: "bad",
-            title:
-              err.code === 1
-                ? "Location permission was denied"
-                : "Could not get your location",
-            sub:
-              err.code === 1
-                ? "Allow location for this site, then try again."
-                : "Turn on location and try again.",
-            retry: true,
-          });
+          setGps({ state: "bad", kind: err.code === 1 ? "denied" : "fail", retry: true });
         },
         { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
       );
       timer.current = setTimeout(() => {
         stopGps();
         if (!best.current)
-          setGps({
-            state: "bad",
-            title: "Could not get your location",
-            sub: "Turn on location and try again.",
-            retry: true,
-          });
+          setGps({ state: "bad", kind: "fail", retry: true });
       }, 15000);
     },
     [stopGps],
@@ -231,15 +244,17 @@ export default function Reporter() {
         });
         setGps({
           state: "good",
-          title: "Location read from photo",
-          sub: `${exif.lat.toFixed(5)}, ${exif.lng.toFixed(5)}${exif.takenAt ? ` · captured ${new Date(exif.takenAt).toLocaleString()}` : " · capture time not saved"}`,
+          kind: "photo",
+          lat: exif.lat,
+          lng: exif.lng,
+          takenAt: exif.takenAt,
           retry: false,
         });
       } else {
         startGps(source === "upload");
       }
     } catch {
-      alert("Could not read that photo. Please try again.");
+      alert(t("notice.photoRead"));
     }
   }
 
@@ -294,9 +309,7 @@ export default function Reporter() {
       });
       const result = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(
-          result.error || "Could not submit this report. Please try again.",
-        );
+        alert(sendErrorText(res.status, result, t));
         setSending(false);
         return;
       }
@@ -311,12 +324,10 @@ export default function Reporter() {
       // Offline fallback
       try {
         await saveOfflineReport(payload);
-        alert(
-          "No signal or server error. Your report has been saved and will send automatically when online.",
-        );
+        alert(t("notice.saved"));
         setView("home");
       } catch {
-        alert("Could not send or save this report. Please try again.");
+        alert(t("notice.saveFail"));
       }
     }
     setSending(false);
@@ -375,9 +386,8 @@ export default function Reporter() {
         if (rejected > 0)
           alert(
             rejected === 1
-              ? "A saved report was not accepted because its photo had already been sent."
-              : rejected +
-                  " saved reports were not accepted because their photos had already been sent.",
+              ? t("notice.queuedRejected1")
+              : t("notice.queuedRejectedN", { n: rejected }),
           );
       } catch (e) {
         console.error("Sync failed, will retry later.");
@@ -387,14 +397,15 @@ export default function Reporter() {
     window.addEventListener("online", syncOffline);
     syncOffline();
     return () => window.removeEventListener("online", syncOffline);
-  }, [refreshMine]);
+  }, [refreshMine, t]);
 
   const viewed = current && current.status === "viewed";
+  const gpsWords = gpsText(gps, t);
 
   return (
     <main className="app">
       <header className="bar">
-        <span className="logo">Wetland Watch</span>
+        <span className="logo">Kuuma Obutonde</span>
         <LanguagePicker />
       </header>
 
@@ -503,12 +514,12 @@ export default function Reporter() {
                   <span className="grow">
                     <span className="t">{r.id}</span>
                     <br />
-                    <span className="muted">{ago(r.ts)}</span>
+                    <span className="muted">{agoText(r.ts, t)}</span>
                   </span>
                   {r.status === "viewed" ? (
-                    <span className="badge b-ok">Viewed by NEMA</span>
+                    <span className="badge b-ok">{t("badge.viewed")}</span>
                   ) : (
-                    <span className="badge b-new">Sent</span>
+                    <span className="badge b-new">{t("badge.sent")}</span>
                   )}
                 </button>
               </li>
@@ -527,40 +538,44 @@ export default function Reporter() {
               setView("home");
             }}
           >
-            ← Retake
+            {t("form.retake")}
           </button>
           <img
             className="photo"
-            alt="Your photo of the pollution"
+            alt={t("form.photoAlt")}
             src={photo}
           />
           <div className="loc" data-state={gps.state}>
-            <div className="loc-t">{gps.title}</div>
-            <div className="loc-s">{gps.sub}</div>
+            <div className="loc-t">{gpsWords.title}</div>
+            <div className="loc-s">{gpsWords.sub}</div>
             {gps.retry && (
-              <button type="button" className="ghost" onClick={startGps}>
-                Try again
+              <button
+                type="button"
+                className="ghost"
+                onClick={() => startGps(photoMeta?.source === "upload")}
+              >
+                {t("gps.retry")}
               </button>
             )}
           </div>
           <p className="label">
-            What is it? <span className="muted">(optional)</span>
+            {t("form.whatIsIt")} <span className="muted">{t("form.optional")}</span>
           </p>
           <div className="chips">
-            {TYPES.map((t) => (
+            {TYPES.map((item) => (
               <button
-                key={t}
+                key={item.value}
                 type="button"
-                aria-pressed={type === t}
-                onClick={() => setType(type === t ? "" : t)}
+                aria-pressed={type === item.value}
+                onClick={() => setType(type === item.value ? "" : item.value)}
               >
-                {t}
+                {t(item.key)}
               </button>
             ))}
           </div>
           <textarea
             maxLength={200}
-            placeholder="Add a short note (optional)"
+            placeholder={t("form.note")}
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
@@ -570,7 +585,7 @@ export default function Reporter() {
             disabled={!photo || !pos || sending}
             onClick={send}
           >
-            {sending ? "Sending…" : "Send to NEMA"}
+            {sending ? t("form.sending") : t("form.send")}
           </button>
         </section>
       )}
@@ -582,52 +597,46 @@ export default function Reporter() {
             className="back"
             onClick={() => setView("home")}
           >
-            ← Home
+            {t("back.home")}
           </button>
           <h1>{current.id}</h1>
-          <p className="muted">Sent {ago(current.ts)}</p>
+          <p className="muted">{t("sent.ago", { t: agoText(current.ts, t) })}</p>
           <ol className="steps">
-            <li className="done">Photo and location sent</li>
+            <li className="done">{t("step.sent")}</li>
             <li className="done">
-              Received by NEMA
-              <small>Thank you. This helps us map the problem.</small>
+              {t("step.received")}
+              <small>{t("step.thanks")}</small>
             </li>
             {viewed ? (
               <li className="done">
-                Viewed by NEMA
+                {t("step.review")}
                 <small>
                   {current.outcome
-                    ? "Next: " + current.outcome
-                    : "A person has looked at your report."}
+                    ? t("step.next", { o: outcomeText(current.outcome, t) })
+                    : t("step.reviewSub")}
                 </small>
               </li>
             ) : (
               <li className="now">
-                Waiting for NEMA to view it
-                <small>You can close this page. Your report is safe.</small>
+                {t("step.waiting")}
+                <small>{t("step.safe")}</small>
               </li>
             )}
-            <li className={viewed ? "done" : ""}>Your reward</li>
+            <li className={viewed ? "done" : ""}>{t("step.reward")}</li>
           </ol>
           {viewed && (
             <div className="reward">
-              <h2>You earned a reward</h2>
-              <p>
-                NEMA has viewed your report. You get <b>1 community point</b>{" "}
-                and an <b>entry in the monthly airtime draw</b>.
-              </p>
+              <h2>{t("reward.title")}</h2>
+              <p>{t("reward.body")}</p>
               {current.claimed ? (
-                <p style={{ marginTop: ".7rem" }}>
-                  <b>Claimed.</b> We will SMS you if you win the draw. Your
-                  number is kept apart from your report.
-                </p>
+                <p style={{ marginTop: ".7rem" }}>{t("reward.claimed")}</p>
               ) : (
                 <div>
                   <input
                     type="tel"
                     inputMode="tel"
                     autoComplete="tel"
-                    placeholder="Phone number for airtime, e.g. 0772 000 000"
+                    placeholder={t("reward.phone")}
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                   />
@@ -637,7 +646,7 @@ export default function Reporter() {
                     style={{ minHeight: 52 }}
                     onClick={claim}
                   >
-                    Claim reward
+                    {t("reward.claim")}
                   </button>
                 </div>
               )}

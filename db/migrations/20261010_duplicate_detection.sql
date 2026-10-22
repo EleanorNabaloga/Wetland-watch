@@ -1,4 +1,4 @@
--- Duplicate detection for the shared Wetland Watch reports table.
+-- Duplicate detection for the shared Kuuma Obutonde reports table.
 --
 -- Apply to the same PostgreSQL database used by wetland-nema, after
 -- 20261001_shared_reporter_storage.sql:

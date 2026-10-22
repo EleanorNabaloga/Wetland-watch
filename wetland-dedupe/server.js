@@ -39,4 +39,4 @@ app.post('/reports/:id/confirm', (req, res) => send(res, confirmReport(req.param
 
 app.get('/hotspots', (req, res) => res.json(computeHotspots(listReports())));
 
-app.listen(4000, () => console.log('Wetland Watch API running on http://localhost:4000'));
+app.listen(4000, () => console.log('Kuuma Obutonde API running on http://localhost:4000'));
