@@ -545,6 +545,17 @@ export default function Reporter() {
             alt={t("form.photoAlt")}
             src={photo}
           />
+          {photoMeta?.source === "upload" &&
+            photoMeta?.locationSource !== "photo" && (
+              <div className="notice" role="status">
+                {t("notice.uploadNoGps")}
+              </div>
+            )}
+          {photoMeta?.source === "upload" && !photoMeta?.takenAt && (
+            <div className="notice" role="status">
+              {t("notice.uploadNoTime")}
+            </div>
+          )}
           <div className="loc" data-state={gps.state}>
             <div className="loc-t">{gpsWords.title}</div>
             <div className="loc-s">{gpsWords.sub}</div>
