@@ -27,3 +27,9 @@ app/api/reports/mine/route.js  Status lookup for this phone's reports
 lib/db.js                      Shared PostgreSQL report storage
 lib/image.js  lib/hash.js      Photo resizing and evidence fingerprint
 ```
+
+## Offline and install
+
+The app is a Progressive Web App. `public/sw.js` (switched on in production by `components/RegisterServiceWorker.js`) saves pages and app files as they load, so after one visit with signal the app opens with no connection. Reports made offline wait on the phone and send when signal returns. `/api/` requests are never cached. Phones can install it from the browser menu ("Add to Home screen" / "Install app"); the manifest is `app/manifest.js`.
+
+When you change caching rules in `sw.js`, bump its `CACHE` name so old caches are cleared.
