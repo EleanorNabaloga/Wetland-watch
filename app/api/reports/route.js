@@ -10,6 +10,7 @@ import { hit, clientIp } from "@/lib/ratelimit";
 import { decodeImageDataUrl } from "@/lib/dup/hash";
 import { inspectPhoto, fingerprintsToStore, isRejected } from "@/lib/dup";
 import { DUPLICATE_STATUS } from "@/lib/dup/thresholds";
+import { verifyEvidence } from "@/lib/evidence";
 
 export const dynamic = "force-dynamic";
 // sharp is a native module, so this route must not run on the edge runtime.
@@ -74,6 +75,28 @@ export async function POST(req) {
   const timeSource = b.timeSource === "photo" ? "photo" : "submitted";
   const publicKey =
     typeof b.publicKey === "string" ? b.publicKey.slice(0, 2048) : "";
+  const signature =
+    typeof b.signature === "string" ? b.signature.slice(0, 512) : "";
+
+  // Check the phone's signature over exactly what was received. Changed
+  // evidence is refused; reports from phones that could not sign are accepted
+  // and marked "unsigned" for the reviewer.
+  const signatureStatus = await verifyEvidence({
+    photo: b.photo,
+    lat: b.lat,
+    lng: b.lng,
+    acc: b.acc ?? null,
+    ts: b.ts,
+    signature: signature || null,
+    publicKey: publicKey || null,
+    hash: hash || null,
+  });
+  if (signatureStatus === "invalid")
+    return fail(
+      400,
+      "This report's evidence does not match its signature. Please take the photo again.",
+      { reason: "bad_signature" },
+    );
 
   // Fingerprint the bytes as received. Nothing the phone says about the photo
   // itself is trusted for this.
@@ -117,6 +140,8 @@ export async function POST(req) {
       locationSource,
       timeSource,
       publicKey,
+      signature: signature || null,
+      signatureStatus,
     },
     fingerprintsToStore(inspection),
   );
