@@ -126,7 +126,7 @@ When you change caching rules in `sw.js`, bump its `CACHE` name so old caches ar
 
 ### Languages
 
-English, Kiswahili and Luganda (`lib/strings/`). The phone always sends keys, never translated text, so NEMA sees English. To add a language, create `lib/strings/xx.js` and add it to `LANGS` in `lib/i18n.js`; missing keys fall back to English. Check translations with `node scripts/check-i18n.mjs`.
+English, Kiswahili and Luganda (`lib/strings/`). The phone always sends keys, never translated text, so NEMA sees English. To add a language, create `lib/strings/xx.js` and import it and add it to `LANGS` and `MESSAGES` in `lib/messages.js`; missing keys fall back to English. Check translations with `npm run check:i18n`.
 
 ## Tests
 
