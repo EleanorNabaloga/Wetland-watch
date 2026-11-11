@@ -12,6 +12,7 @@ Nobody signs in to this app. Each report gets a secret token, kept on the phone,
 More detail:
 
 - [docs/api.md](docs/api.md): the three API routes
+- [`wetland-nema/docs/ai.md`](https://github.com/EleanorNabaloga/wetland-nema/blob/main/docs/ai.md): what the AI model should do in the system (proposed): rate report severity for triage and rank the most affected places. It runs on the staff side; the reporter app does not change.
 - [docs/design-spec.md](docs/design-spec.md): the product design the system is working towards
 - [`wetland-nema/docs/architecture.md`](https://github.com/EleanorNabaloga/wetland-nema/blob/main/docs/architecture.md): how both apps fit together and what officers do with a report
 
