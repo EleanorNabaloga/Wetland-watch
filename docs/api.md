@@ -4,7 +4,7 @@ Public routes, no login. All take and return JSON. Errors look like `{ "error": 
 
 ## `POST /api/reports`
 
-Send a report. Limit: 30 per hour per IP (many phones share one IP on mobile networks).
+Send a report. Limit: 30 per hour per IP (many phones share one IP on mobile networks), counted in the database across all server instances.
 
 ```json
 {
@@ -41,7 +41,7 @@ Responses:
 
 | Status | Body |
 | --- | --- |
-| 201 | `{ "id", "ts", "status": "new", "outcome": "", "claimed": false, "token", "dupStatus"? }`. `dupStatus` is `group` or `flag` when the photo looked like an earlier one. **The token is shown only once.** |
+| 201 | `{ "id", "ts", "status": "new", "outcome": "", "rewardAvailable": false, "claimed": false, "token", "dupStatus"? }`. `dupStatus` is `group` or `flag` when the photo looked like an earlier one. **The token is shown only once.** |
 | 400 | Missing or bad photo or location, unreadable photo, or `reason: "bad_signature"` |
 | 409 | Duplicate photo. `reason`: `exact_duplicate`, `near_duplicate`, or either with `_claimed_elsewhere` |
 | 429 | Too many reports from this connection |
@@ -54,15 +54,15 @@ Status of this phone's reports. POST so tokens stay out of URLs and logs.
 { "items": [{ "id": "NEMA-101", "token": "..." }] }
 ```
 
-Up to 50 items. Returns an array of `{ id, ts, status, outcome, claimed }` for items whose token matches. Others are left out silently.
+Up to 50 items. Returns an array of `{ id, ts, status, outcome, rewardAvailable, claimed }` for items whose token matches. Others are left out silently.
 
 ## `GET /api/reports/[id]`
 
-One report's status. Send the token in the `x-report-token` header. Returns `{ id, ts, status, outcome, claimed }`, or 404 when the report does not exist **or** the token is wrong (so ids cannot be probed).
+One report's status. Send the token in the `x-report-token` header. Returns `{ id, ts, status, outcome, rewardAvailable, claimed }`, or 404 when the report does not exist **or** the token is wrong (so ids cannot be probed).
 
 ## `PATCH /api/reports/[id]`
 
-Claim the reward.
+Claim the reward. Only possible when `rewardAvailable` is true: NEMA triaged the report as Emergency, Enforcement or Referral and did not mark it false.
 
 ```json
 { "claim": true, "token": "...", "phone": "+256 700 000000" }
@@ -74,4 +74,4 @@ Claim the reward.
 | 400 | Missing `claim`, or bad phone number |
 | 403 | Wrong token |
 | 404 | No such report |
-| 409 | Not unlocked yet (an officer has not reviewed it) |
+| 409 | Not unlocked yet (not verified by NEMA) |

@@ -38,17 +38,18 @@ Keep real values in `.env.local`. It is git-ignored. Never commit it.
 
 ## Database setup
 
-Run these migrations once, in this order:
+Run the migrations once, in date order. They are split between the two repos; with both checked out side by side:
 
 ```bash
+node --env-file=.env.local scripts/run-migration.mjs ../wetland-nema/db/migrations/20260930_base_tables.sql
 node --env-file=.env.local scripts/run-migration.mjs ../wetland-nema/db/migrations/20261001_shared_reporter_storage.sql
 node --env-file=.env.local scripts/run-migration.mjs db/migrations/20261010_duplicate_detection.sql
+node --env-file=.env.local scripts/run-migration.mjs ../wetland-nema/db/migrations/20261020_reporter_trust.sql
 node --env-file=.env.local scripts/run-migration.mjs db/migrations/20261023_evidence_signature.sql
+node --env-file=.env.local scripts/run-migration.mjs db/migrations/20261111_rate_limits.sql
 ```
 
-All are safe to run more than once. The last one also runs automatically when the first report is stored.
-
-The base tables (`reports`, `identity_vault`) are not created by any file in either repo yet. They must already exist in the database.
+All are safe to run more than once. The signature columns and the `rate_limits` table are also created automatically on first use.
 
 ## How a report works
 
@@ -64,6 +65,7 @@ The base tables (`reports`, `identity_vault`) are not created by any file in eit
     send when the phone is back online
                      ---- send ---->
                                               5. Rate limit: 30 per hour per IP
+                                                 (counted in the database)
                                               6. Check the signature
                                                  changed evidence -> refused
                                               7. Duplicate check on the photo bytes
@@ -101,13 +103,20 @@ The public key also identifies the phone (without a name or number) for the dash
 
 Refused uploads are logged in `duplicate_attempts` (fingerprints and IP, never the photo). A unique index on `photo_hash` stops two identical uploads that arrive at the same moment.
 
-The limits are in `lib/dup/thresholds.js`. They are starting values: outdoor photos look alike, so measure them on real photos before the pilot.
+The limits are in `lib/dup/thresholds.js`. They are starting values: outdoor photos look alike, so measure them on real photos before the pilot:
+
+```bash
+npm run tune -- path/to/photos
+```
+
+Put photos of the same scene (same place, different shot) in subfolders if you have them. The script re-saves each photo the way a reused one usually arrives (smaller, recompressed, mirrored, brightened), compares every pair, and shows how many re-saved copies the current limits catch and how many honest photos they would refuse or flag. It changes nothing.
 
 ### Status and rewards
 
 - The server returns a random token once and stores only its SHA-256 hash.
 - The phone keeps `{id, token}` pairs in `localStorage` and asks `POST /api/reports/mine` for their status. The answer has status, next step and claim state only: no photo, no location.
-- Once an officer marks a report as reviewed, the reporter can claim a reward with a phone number. The number is encrypted (AES-256-GCM) into `identity_vault`, apart from the report.
+- A reward unlocks only when NEMA **verifies** the report: an officer triages it as Emergency, Enforcement or Referral, and has not marked it false (`lib/rewards.js`). Being reviewed is not enough, and Duplicate or Insufficient reports earn nothing. The phone sees this as `rewardAvailable`.
+- The reporter then claims with a phone number. The number is encrypted (AES-256-GCM) into `identity_vault`, apart from the report.
 
 ### Offline and install
 
@@ -125,33 +134,34 @@ English, Kiswahili and Luganda (`lib/strings/`). The phone always sends keys, ne
 npm test
 ```
 
-33 tests (Node's built-in runner) covering duplicate detection and evidence signing. They need no database. All passed on 11 November 2026.
+41 tests (Node's built-in runner) covering duplicate detection, evidence signing and the reward rule. They need no database. All passed on 11 November 2026.
 
 ## Project structure
 
 ```
 app/
-  page.js                       re-exports ../page.backup.js (the reporter screens)
+  page.js                       shows components/ReporterApp.js
   layout.js  manifest.js        page shell, PWA manifest
   api/reports/route.js          send a report
   api/reports/[id]/route.js     one report's status, claim reward
   api/reports/mine/route.js     status of this phone's reports
-page.backup.js                  the reporter screens (camera, form, my reports)
 components/
+  ReporterApp.js                the reporter screens (camera, form, my reports)
   LanguagePicker.js  PinMap.js  RegisterServiceWorker.js
 lib/
   db.js                         all database access
   dup/                          duplicate photo detection
   device.js  evidence.js        phone key and signature check
   crypto.js                     phone number encryption
+  rewards.js                    when a reward unlocks
   image.js  exif.js  hash.js    photo resizing, photo GPS/time, evidence hash
   offline.js                    offline queue (IndexedDB)
   i18n.js  strings/             translations
-  ratelimit.js  geo.js  constants.js
+  ratelimit.js                  rate limits (database, memory fallback)
+  geo.js  constants.js
 db/migrations/                  SQL changes
-scripts/                        run a migration, check translations
+scripts/                        run a migration, check translations, tune duplicate limits
 tests/                          node --test suites
-wetland-dedupe/                 early stand-alone prototype (Express), not used by the app
 ```
 
 ## Deploying
@@ -160,12 +170,11 @@ wetland-dedupe/                 early stand-alone prototype (Express), not used 
 2. Run the migrations above.
 3. Deploy. The report route uses `sharp`, so it runs on the Node.js runtime, not the edge.
 
-## Known gaps
+## Fixed in November 2026
 
-Found while writing these docs (November 2026):
-
-1. **Rewards unlock on "reviewed", not on verification.** An officer only has to open and mark a report reviewed for its reward to be claimable, even if it is later triaged as Duplicate or Insufficient. The design spec says rewards come after verification.
-2. **`npm run tune` is broken.** It runs `scripts/tune-thresholds.mjs`, which is not in the repo.
-3. **Base table definitions are missing** from both repos (see Database setup).
-4. **Rate limiting is in memory**, so on serverless hosting each instance counts separately and it resets on restart.
-5. **Leftover files.** The reporter screens live in `page.backup.js` at the repo root (re-exported by `app/page.js`). `lib/tokens.js`, `lib/flags.js`, `lib/queue.js` and `lib/format.js` are not used. `kuuma-obutonde.html` is the original single-file prototype. `debug-toggle.mjs` edits the report route to show error details. `wetland-dedupe/` is an old prototype that includes sample photos and JSON data.
+- Rewards unlock on verification (Emergency, Enforcement or Referral, not marked false) instead of on "reviewed".
+- Rate limits are kept in the database (`rate_limits`, hashed keys), so all server instances share one count. If the database cannot be reached they fall back to memory.
+- The stored evidence hash is now worked out on the server. Before, phones that could not make a hash all sent `"unavailable"`, and because the column is unique, the second such report failed with a server error.
+- Added `scripts/tune-thresholds.mjs`, which `npm run tune` pointed to but was missing.
+- Added the base-table migration (in `wetland-nema`).
+- Moved the reporter screens from `page.backup.js` to `components/ReporterApp.js`; removed unused modules (`lib/tokens.js`, `flags.js`, `queue.js`, `format.js`), `debug-toggle.mjs`, the first prototype `kuuma-obutonde.html` and the `wetland-dedupe/` prototype. They are still in the git history.

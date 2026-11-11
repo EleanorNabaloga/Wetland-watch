@@ -8,7 +8,7 @@
 //   sending reports is handled by the app's own offline queue.
 //
 // Bump CACHE when this file's caching rules change; old caches are deleted.
-const CACHE = "kuuma-obutonde-v2";
+const CACHE = "kuuma-obutonde-v3";
 const PRECACHE = ["/", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (event) => {

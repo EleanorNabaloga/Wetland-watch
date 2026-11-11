@@ -10,7 +10,7 @@ import { hit, clientIp } from "@/lib/ratelimit";
 import { decodeImageDataUrl } from "@/lib/dup/hash";
 import { inspectPhoto, fingerprintsToStore, isRejected } from "@/lib/dup";
 import { DUPLICATE_STATUS } from "@/lib/dup/thresholds";
-import { verifyEvidence } from "@/lib/evidence";
+import { verifyEvidence, evidenceHash } from "@/lib/evidence";
 
 export const dynamic = "force-dynamic";
 // sharp is a native module, so this route must not run on the edge runtime.
@@ -39,7 +39,7 @@ const rejectionMessage = (reason) =>
 // POST /api/reports -> anyone can send a report. No sign-in. Returns the reporter's secret token once.
 export async function POST(req) {
   const ip = clientIp(req);
-  if (!hit("report:" + ip, MAX_REPORTS_PER_HOUR, 60 * 60 * 1000)) {
+  if (!(await hit("report:" + ip, MAX_REPORTS_PER_HOUR, 60 * 60 * 1000))) {
     return fail(
       429,
       "Too many reports from this connection. Please try again later.",
@@ -68,8 +68,11 @@ export async function POST(req) {
     return fail(400, "Location is invalid");
   const type = TYPES.includes(b.type) ? b.type : "";
   const note = typeof b.note === "string" ? b.note.slice(0, 200) : "";
-  const hash = typeof b.hash === "string" ? b.hash.slice(0, 64) : "";
   const ts = Number.isFinite(b.ts) ? b.ts : Date.now();
+  // The phone's hash is only checked (in verifyEvidence). What is stored is the
+  // server's own hash of the evidence, so phones that could not make one (they
+  // send "unavailable") do not collide on the unique hash column.
+  const phoneHash = typeof b.hash === "string" ? b.hash.slice(0, 64) : "";
   const source = b.source === "upload" ? "upload" : "camera";
   const locationSource = b.locationSource === "photo" ? "photo" : "device";
   const timeSource = b.timeSource === "photo" ? "photo" : "submitted";
@@ -89,7 +92,7 @@ export async function POST(req) {
     ts: b.ts,
     signature: signature || null,
     publicKey: publicKey || null,
-    hash: hash || null,
+    hash: phoneHash || null,
   });
   if (signatureStatus === "invalid")
     return fail(
@@ -134,7 +137,7 @@ export async function POST(req) {
       acc,
       type,
       note,
-      hash,
+      hash: evidenceHash({ photo: b.photo, lat: b.lat, lng: b.lng, acc: b.acc ?? null, ts: b.ts }),
       ts,
       source,
       locationSource,

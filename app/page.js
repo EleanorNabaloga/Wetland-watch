@@ -1,1 +1,1 @@
-export { default } from "../page.backup";
+export { default } from "@/components/ReporterApp";

@@ -400,6 +400,8 @@ export default function Reporter() {
   }, [refreshMine, t]);
 
   const viewed = current && current.status === "viewed";
+  // Unlocks only when NEMA verifies the report, not when it is first reviewed.
+  const rewardOpen = Boolean(current && current.rewardAvailable);
   const gpsWords = gpsText(gps, t);
 
   return (
@@ -633,9 +635,9 @@ export default function Reporter() {
                 <small>{t("step.safe")}</small>
               </li>
             )}
-            <li className={viewed ? "done" : ""}>{t("step.reward")}</li>
+            <li className={rewardOpen ? "done" : ""}>{t("step.reward")}</li>
           </ol>
-          {viewed && (
+          {rewardOpen && (
             <div className="reward">
               <h2>{t("reward.title")}</h2>
               <p>{t("reward.body")}</p>
