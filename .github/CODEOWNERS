@@ -1,0 +1,8 @@
+# Code Owners Policy
+# All pull requests require approval from internal repository owners before merging.
+
+* @EleanorNabaloga @MarkDanielsMCraft
+.github/ @EleanorNabaloga @MarkDanielsMCraft
+db/ @EleanorNabaloga @MarkDanielsMCraft
+lib/ @EleanorNabaloga @MarkDanielsMCraft
+app/ @EleanorNabaloga @MarkDanielsMCraft
