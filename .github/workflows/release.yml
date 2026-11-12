@@ -1,0 +1,86 @@
+name: Automated Semantic Release and Versioning
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    name: Create Automated Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Determine Next Semantic Version
+        id: versioning
+        run: |
+          # Fetch all git tags
+          git fetch --tags
+
+          # Get latest tag or default to v0.1.0
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+          echo "Current latest tag: ${LATEST_TAG}"
+
+          # Extract major, minor, patch numbers
+          VERSION=${LATEST_TAG#v}
+          MAJOR=$(echo "${VERSION}" | cut -d. -f1)
+          MINOR=$(echo "${VERSION}" | cut -d. -f2)
+          PATCH=$(echo "${VERSION}" | cut -d. -f3)
+
+          # Inspect commits since latest tag for conventional commit patterns
+          COMMITS=$(git log ${LATEST_TAG}..HEAD --oneline 2>/dev/null || git log --oneline -n 10)
+
+          if echo "${COMMITS}" | grep -qE "breaking|BREAKING CHANGE"; then
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+          elif echo "${COMMITS}" | grep -qE "^[a-f0-9]+ feat"; then
+            MINOR=$((MINOR + 1))
+            PATCH=0
+          else
+            PATCH=$((PATCH + 1))
+          fi
+
+          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
+          echo "Computed new version: ${NEW_VERSION}"
+          echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
+          echo "clean_version=${MAJOR}.${MINOR}.${PATCH}" >> $GITHUB_OUTPUT
+
+      - name: Update Package Version
+        env:
+          NEW_VER: ${{ steps.versioning.outputs.clean_version }}
+        run: |
+          npm version "${NEW_VER}" --no-git-tag-version
+
+      - name: Generate Release Notes and Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.versioning.outputs.new_version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Commit updated package version
+          git add package.json package-lock.json 2>/dev/null || git add package.json
+          git commit -m "chore(release): ${TAG_NAME}" || true
+          git tag "${TAG_NAME}"
+          git push origin "${TAG_NAME}"
+
+          # Generate release notes and create release
+          gh release create "${TAG_NAME}" \
+            --title "Kuuma Obutonde Citizen Reporter ${TAG_NAME}" \
+            --generate-notes

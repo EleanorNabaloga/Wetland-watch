@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability Disclosure
+    url: https://github.com/EleanorNabaloga/Wetland-watch/blob/main/SECURITY.md
+    about: Please report security vulnerabilities privately according to our security policy.
+  - name: NEMA Staff Incident Dashboard
+    url: https://github.com/EleanorNabaloga/wetland-nema
+    about: Environmental officers and administrative staff access incident triage and SLA tracking via wetland-nema.
