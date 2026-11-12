@@ -1,4 +1,4 @@
-name: Inactive Issue and Pull Request Triage
+name: Inactive Issue and Pull Request Cleanup
 
 on:
   schedule:
@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  triage:
+  stale:
     name: Mark Inactive Issues and PRs
     runs-on: ubuntu-latest
     steps:

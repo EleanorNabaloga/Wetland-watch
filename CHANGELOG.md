@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Engineering handoff documentation in `docs/HANDOFF.md`.
 
 ### Changed
-- Updated `README.md` with CI badges, sequence diagram for cryptographic evidence signing, perceptual hashing thresholds, and quickstart documentation.
+- Updated `README.md` with CI badges, sequence diagram for device evidence signatures, duplicate photo checks, and quickstart documentation.
 - Updated `docs/api.md` documenting report creation and automatic queue intake.
 - Configured `"license": "AGPL-3.0"` and `"prepare": "node scripts/install-git-hooks.mjs"` in `package.json`.
 
