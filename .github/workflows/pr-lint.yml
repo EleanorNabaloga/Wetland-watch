@@ -1,0 +1,32 @@
+name: Pull Request Title Linter
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  lint-pr-title:
+    name: Validate Conventional Commit Title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR Title Format
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "Inspecting pull request title: ${PR_TITLE}"
+          # Enforces: feat, fix, docs, style, refactor, perf, test, build, ci, chore
+          REGEX="^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\([a-zA-Z0-9_-]+\))?: .+"
+
+          if echo "${PR_TITLE}" | grep -qE "${REGEX}"; then
+            echo "Success: Pull request title matches conventional commits specification."
+          else
+            echo "Error: Pull request title must follow Conventional Commits format."
+            echo "Examples:"
+            echo "  feat(auth): add hardware signature verification"
+            echo "  fix(pwa): resolve offline sync conflict"
+            echo "  docs(api): document queue payload schema"
+            exit 1
+          fi

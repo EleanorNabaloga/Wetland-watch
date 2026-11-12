@@ -1,0 +1,24 @@
+#!/bin/sh
+# Local environment pre-push safeguard
+# Prevents direct pushes and branch deletions to protected production and staging branches.
+
+zero_ref="0000000000000000000000000000000000000000"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  target_branch=$(echo "${remote_ref}" | sed 's@refs/heads/@@')
+
+  if [ "${target_branch}" = "main" ] || [ "${target_branch}" = "staging" ]; then
+    echo "======================================================================"
+    echo "BLOCKED: Direct push or deletion of protected branch '${target_branch}' is forbidden."
+    echo "All changes must be committed to a feature branch (feat/*, fix/*) and"
+    echo "submitted via pull request targeting 'dev' for code review."
+    echo "======================================================================"
+    exit 1
+  fi
+
+  if [ "${local_sha}" = "${zero_ref}" ]; then
+    continue
+  fi
+done
+
+exit 0

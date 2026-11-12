@@ -12,6 +12,7 @@ import {
   clearOfflineReport,
 } from "@/lib/offline";
 import { signEvidence } from "@/lib/device";
+import { sanitizeNote } from "@/lib/sanitize";
 
 // Covers both wet and dry land: streets, slums, markets, wetlands, rivers, forests.
 // "value" is saved in English for NEMA (must match TYPES in lib/db.js); "key" is the label shown.
@@ -120,6 +121,7 @@ export default function Reporter() {
   const [openId, setOpenId] = useState(null);
   const [current, setCurrent] = useState(null);
   const [phone, setPhone] = useState("");
+  const [panicked, setPanicked] = useState(false);
 
   const watchId = useRef(null);
   const timer = useRef(null);
@@ -132,6 +134,21 @@ export default function Reporter() {
     clearTimeout(timer.current);
     watchId.current = null;
   }, []);
+
+  const handlePanic = useCallback(() => {
+    stopGps();
+    setPhoto(null);
+    setPhotoMeta(null);
+    setNote("");
+    setType("");
+    setMine([]);
+    setCurrent(null);
+    setView("home");
+    setPanicked(true);
+    try {
+      localStorage.removeItem(MINE_KEY);
+    } catch {}
+  }, [stopGps]);
 
   const startGps = useCallback(
     (fromUploadedPhoto = false) => {
@@ -295,7 +312,7 @@ export default function Reporter() {
         pos.locationSource || photoMeta?.locationSource || "device",
       timeSource: photoMeta?.takenAt ? "photo" : "submitted",
       type,
-      note: note.trim(),
+      note: sanitizeNote(note.trim()),
       hash,
       signature,
       publicKey,
@@ -404,11 +421,59 @@ export default function Reporter() {
   const rewardOpen = Boolean(current && current.rewardAvailable);
   const gpsWords = gpsText(gps, t);
 
+  if (panicked) {
+    return (
+      <main className="app">
+        <header className="bar">
+          <span className="logo">Daily Farming Tips</span>
+          <button
+            type="button"
+            onClick={() => setPanicked(false)}
+            style={{
+              padding: "4px 10px",
+              fontSize: "0.8125rem",
+              background: "#f1f5f9",
+              border: "1px solid #cbd5e1",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+          >
+            Home
+          </button>
+        </header>
+        <div style={{ padding: "16px", background: "#ffffff", borderRadius: "12px", margin: "16px 0", border: "1px solid #e2e8f0" }}>
+          <h2 style={{ fontSize: "1.125rem", marginBottom: "8px", color: "#1e293b" }}>Seasonal Farming Tips</h2>
+          <p style={{ color: "#475569", lineHeight: "1.5" }}>
+            Clear water ditches when it rains heavily to stop flooding. Protect garden soil so food crops grow well.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="app">
       <header className="bar">
         <span className="logo">Kuuma Obutonde</span>
-        <LanguagePicker />
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={handlePanic}
+            title="Panic: hide screen immediately"
+            style={{
+              padding: "4px 8px",
+              fontSize: "0.75rem",
+              background: "#fee2e2",
+              color: "#b91c1c",
+              border: "1px solid #fca5a5",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+          >
+            Hide
+          </button>
+          <LanguagePicker />
+        </div>
       </header>
 
       {view === "home" && (
