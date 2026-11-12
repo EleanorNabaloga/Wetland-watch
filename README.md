@@ -6,14 +6,14 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
 [![Security Policy](https://img.shields.io/badge/security-policy-informational.svg)](SECURITY.md)
 
-Kuuma Obutonde (Citizen Reporter) is a progressive web application designed for Ugandan citizens to report environmental damage, illegal wetland encroachment, dumping, and industrial pollution. The application empowers whistleblowers through hardware-backed cryptographic evidence signing, anonymous incident tracking, and offline report capture.
+Kuuma Obutonde (Citizen Reporter) is a progressive web application designed for Ugandan citizens to report environmental damage, illegal wetland encroachment, dumping, and industrial pollution. The application helps protect whistleblowers through device-signed evidence, anonymous incident tracking, and offline report capture.
 
 The application operates as the public intake component of the Kuuma Obutonde system, sharing an encrypted PostgreSQL database with the staff dashboard:
 
 | Component | Repository | Target Users | Operational Purpose |
 | :--- | :--- | :--- | :--- |
 | **Citizen Reporter (this repository)** | `Wetland-watch` | General Public | Offline photo capture, hardware evidence signing, duplicate photo rejection, anonymous reward claims. |
-| **Staff Dashboard** | [wetland-nema](https://github.com/EleanorNabaloga/wetland-nema) | NEMA Officers | Incident triage with 4-tier AI fallback, statutory SLA tracking, regional hotspot mapping, and audit logging. |
+| **Staff Dashboard** | [wetland-nema](https://github.com/EleanorNabaloga/wetland-nema) | NEMA Officers | Incident sorting with 4-tier AI fallback, statutory deadline tracking, regional hotspot mapping, and audit logging. |
 
 ---
 
@@ -39,7 +39,7 @@ sequenceDiagram
         Server->>Server: Verify ECDSA P-256 signature
         Server->>Server: Compute SHA-256 and 64-bit dHash
         Server->>Database: Check duplicate attempts and rate limits
-        Server->>Database: Store report and enqueue for AI triage
+        Server->>Database: Store report and add to AI queue
         Server-->>Browser: Return report ID and anonymous secret token
     end
     Citizen->>Browser: Check status and claim airtime reward

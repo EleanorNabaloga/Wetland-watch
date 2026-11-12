@@ -12,11 +12,11 @@ Closes #
 - [ ] Automated tests executed (`npm test`) with 100 percent pass rate.
 - [ ] Production build verified (`npm run build`) with zero errors.
 - [ ] Offline PWA sync verified.
-- [ ] Preserves hardware-backed cryptographic evidence signing.
+- [ ] Preserves device evidence signatures.
 
 ## Privacy and Anonymity Checklist
-- [ ] Whistleblower anonymity preserved (phone numbers remain exclusively in `identity_vault`).
-- [ ] Coordinates are quantized where appropriate.
+- [ ] Whistleblower anonymity preserved (phone numbers stay in `identity_vault`).
+- [ ] Coordinates are rounded where appropriate.
 
 ## Documentation Synchronization Checklist
 - [ ] All modified routes, variables, and scripts updated across README.md, docs/HANDOFF.md, and CHANGELOG.md.
