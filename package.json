@@ -7,7 +7,7 @@
     "dev:https": "next dev --experimental-https -H 0.0.0.0",
     "build": "next build",
     "start": "next start -H 0.0.0.0",
-    "test": "node --test \"tests/*.test.mjs\"",
+    "test": "node --test tests/*.test.mjs",
     "test:docs": "node --test tests/docs_integrity.test.mjs",
     "prepare": "node scripts/install-git-hooks.mjs",
     "tune": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/tune-thresholds.mjs",

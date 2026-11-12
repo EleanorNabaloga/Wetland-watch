@@ -31,6 +31,9 @@ jobs:
       - name: Run Test Suite
         run: npm test
 
+      - name: Check Translation Keys
+        run: npm run check:i18n
+
       - name: Compile Next.js Build
         run: npm run build
         env:
