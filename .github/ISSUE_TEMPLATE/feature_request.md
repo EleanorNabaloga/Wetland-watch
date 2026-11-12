@@ -14,4 +14,4 @@ A concise explanation of how this feature should function.
 
 ## Regulatory and Privacy Impact
 - Does this impact whistleblower confidentiality or anonymous evidence collection?
-- Does this alter ECDSA P-256 evidence signing or perceptual deduplication?
+- Does this alter ECDSA P-256 evidence signatures or duplicate photo checks?

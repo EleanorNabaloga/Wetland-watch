@@ -9,11 +9,11 @@ This document provides a strictly verified status of all planned features for Ku
 | Feature | Source in Existing Docs | Current Status | Code Verification Reference |
 | :--- | :--- | :--- | :--- |
 | **Citizen Reporter PWA** | `docs/design-spec.md` (Track B: Smartphone) | Completed | `components/ReporterApp.js`, `public/sw.js`, `app/manifest.js` |
-| **Cryptographic Evidence Signing** | `docs/design-spec.md` (Track B: Evidence-Grade) | Completed | `lib/device.js`, `lib/evidence.js`, `tests/evidence.test.mjs` |
-| **Perceptual Duplicate Detection** | `docs/design-spec.md` (Backend: Dedupe) | Completed | `lib/dup/`, `tests/duplicate-detection.test.mjs` |
+| **Device Evidence Signatures** | `docs/design-spec.md` (Track B: Evidence-Grade) | Completed | `lib/device.js`, `lib/evidence.js`, `tests/evidence.test.mjs` |
+| **Duplicate Photo Detection** | `docs/design-spec.md` (Backend: Dedupe) | Completed | `lib/dup/`, `tests/duplicate-detection.test.mjs` |
 | **Whistleblower Vault (Zero-PII)** | `docs/design-spec.md` (Governance: DPIA) | Completed | `identity_vault` table, AES-256-GCM encryption in `lib/crypto.js` |
 | **Anonymous Token Status Check** | `docs/design-spec.md` (Track B: Case ID) | Completed | `app/api/reports/mine/route.js`, `app/api/reports/[id]/route.js` |
-| **AI Triage Queue Intake** | `wetland-nema/docs/ai.md` (Build order: Job 1) | Completed | `lib/db.js` (`addReport` enqueues into `ai_triage_queue`) |
+| **AI Queue Intake** | `wetland-nema/docs/ai.md` (Build order: Job 1) | Completed | `lib/db.js` (`addReport` enqueues into `ai_triage_queue`) |
 | **Repository Merge Safeguards** | `docs/BRANCH_PROTECTION.md` | Completed | `.github/workflows/merge-guard.yml`, `.githooks/pre-push`, `CODEOWNERS` |
 | **Direct Object Storage Uploads** | `wetland-nema/README.md` (Still to build) | Planned | Tracked in Phase 2 |
 | **Automated Airtime Redemption** | `docs/design-spec.md` (Rewards) | Planned | Tracked in Phase 2 |

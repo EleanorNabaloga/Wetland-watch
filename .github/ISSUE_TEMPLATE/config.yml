@@ -5,4 +5,4 @@ contact_links:
     about: Please report security vulnerabilities privately according to our security policy.
   - name: NEMA Staff Incident Dashboard
     url: https://github.com/EleanorNabaloga/wetland-nema
-    about: Environmental officers and administrative staff access incident triage and SLA tracking via wetland-nema.
+    about: Environmental officers and administrative staff access incident sorting and SLA tracking via wetland-nema.

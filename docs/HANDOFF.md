@@ -91,7 +91,7 @@ As a contributor, the following repository configurations require administrative
 Run via GitHub CLI:
 ```bash
 gh repo edit EleanorNabaloga/Wetland-watch \
-  --description "Citizen reporting progressive web application for environmental damage and wetland protection with cryptographic evidence signing in Uganda." \
+  --description "Citizen reporting progressive web application for environmental damage and wetland protection with device-signed evidence in Uganda." \
   --add-topic "environmental-protection,citizen-science,uganda,nema,pwa,offline-first,evidence-signing,cryptography,anti-fraud,whistleblower-protection"
 ```
 
