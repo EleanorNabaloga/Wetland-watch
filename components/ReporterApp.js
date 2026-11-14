@@ -428,22 +428,15 @@ export default function Reporter() {
           <span className="logo">Daily Farming Tips</span>
           <button
             type="button"
+            className="ghost"
             onClick={() => setPanicked(false)}
-            style={{
-              padding: "4px 10px",
-              fontSize: "0.8125rem",
-              background: "#f1f5f9",
-              border: "1px solid #cbd5e1",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
           >
             Home
           </button>
         </header>
-        <div style={{ padding: "16px", background: "#ffffff", borderRadius: "12px", margin: "16px 0", border: "1px solid #e2e8f0" }}>
-          <h2 style={{ fontSize: "1.125rem", marginBottom: "8px", color: "#1e293b" }}>Seasonal Farming Tips</h2>
-          <p style={{ color: "#475569", lineHeight: "1.5" }}>
+        <div className="decoy-card">
+          <h2>Seasonal Farming Tips</h2>
+          <p>
             Clear water ditches when it rains heavily to stop flooding. Protect garden soil so food crops grow well.
           </p>
         </div>
@@ -455,20 +448,12 @@ export default function Reporter() {
     <main className="app">
       <header className="bar">
         <span className="logo">Kuuma Obutonde</span>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
           <button
             type="button"
+            className="panic-btn"
             onClick={handlePanic}
             title="Panic: hide screen immediately"
-            style={{
-              padding: "4px 8px",
-              fontSize: "0.75rem",
-              background: "#fee2e2",
-              color: "#b91c1c",
-              border: "1px solid #fca5a5",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
           >
             Hide
           </button>
