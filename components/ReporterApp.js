@@ -12,6 +12,7 @@ import {
   clearOfflineReport,
 } from "@/lib/offline";
 import { signEvidence } from "@/lib/device";
+import { sanitizeNote } from "@/lib/sanitize";
 
 // Covers both wet and dry land: streets, slums, markets, wetlands, rivers, forests.
 // "value" is saved in English for NEMA (must match TYPES in lib/db.js); "key" is the label shown.
@@ -120,6 +121,7 @@ export default function Reporter() {
   const [openId, setOpenId] = useState(null);
   const [current, setCurrent] = useState(null);
   const [phone, setPhone] = useState("");
+  const [panicked, setPanicked] = useState(false);
 
   const watchId = useRef(null);
   const timer = useRef(null);
@@ -132,6 +134,21 @@ export default function Reporter() {
     clearTimeout(timer.current);
     watchId.current = null;
   }, []);
+
+  const handlePanic = useCallback(() => {
+    stopGps();
+    setPhoto(null);
+    setPhotoMeta(null);
+    setNote("");
+    setType("");
+    setMine([]);
+    setCurrent(null);
+    setView("home");
+    setPanicked(true);
+    try {
+      localStorage.removeItem(MINE_KEY);
+    } catch {}
+  }, [stopGps]);
 
   const startGps = useCallback(
     (fromUploadedPhoto = false) => {
@@ -295,7 +312,7 @@ export default function Reporter() {
         pos.locationSource || photoMeta?.locationSource || "device",
       timeSource: photoMeta?.takenAt ? "photo" : "submitted",
       type,
-      note: note.trim(),
+      note: sanitizeNote(note.trim()),
       hash,
       signature,
       publicKey,
@@ -404,11 +421,44 @@ export default function Reporter() {
   const rewardOpen = Boolean(current && current.rewardAvailable);
   const gpsWords = gpsText(gps, t);
 
+  if (panicked) {
+    return (
+      <main className="app">
+        <header className="bar">
+          <span className="logo">Daily Farming Tips</span>
+          <button
+            type="button"
+            className="ghost"
+            onClick={() => setPanicked(false)}
+          >
+            Home
+          </button>
+        </header>
+        <div className="decoy-card">
+          <h2>Seasonal Farming Tips</h2>
+          <p>
+            Clear water ditches when it rains heavily to stop flooding. Protect garden soil so food crops grow well.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="app">
       <header className="bar">
         <span className="logo">Kuuma Obutonde</span>
-        <LanguagePicker />
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+          <button
+            type="button"
+            className="panic-btn"
+            onClick={handlePanic}
+            title="Panic: hide screen immediately"
+          >
+            Hide
+          </button>
+          <LanguagePicker />
+        </div>
       </header>
 
       {view === "home" && (

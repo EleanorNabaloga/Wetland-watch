@@ -41,7 +41,7 @@ Responses:
 
 | Status | Body |
 | --- | --- |
-| 201 | `{ "id", "ts", "status": "new", "outcome": "", "rewardAvailable": false, "claimed": false, "token", "dupStatus"? }`. `dupStatus` is `group` or `flag` when the photo looked like an earlier one. **The token is shown only once.** |
+| 201 | `{ "id", "ts", "status": "new", "outcome": "", "rewardAvailable": false, "claimed": false, "token", "dupStatus"? }`. `dupStatus` is `group` or `flag` when the photo looked like an earlier one. **The token is shown only once.** The submission is automatically enqueued into `ai_triage_queue` for background assessment. |
 | 400 | Missing or bad photo or location, unreadable photo, or `reason: "bad_signature"` |
 | 409 | Duplicate photo. `reason`: `exact_duplicate`, `near_duplicate`, or either with `_claimed_elsewhere` |
 | 429 | Too many reports from this connection |

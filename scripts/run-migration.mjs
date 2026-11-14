@@ -8,7 +8,7 @@ if (!file) {
 }
 const url = process.env.DATABASE_URL;
 if (!url) {
-  console.log('DATABASE_URL was not found. Check the setting name in .env.local and tell Claude.');
+  console.log('DATABASE_URL was not found. Check the setting name in .env.local.');
   process.exit(1);
 }
 

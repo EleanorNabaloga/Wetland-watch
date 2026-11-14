@@ -1,0 +1,141 @@
+name: Merge Guard and Contributor Authorization
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [dev, staging, main]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  verify-authorization:
+    name: Verify Contributor and Branch Promotion
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate Contributor Authorization
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          ACTOR: ${{ github.actor }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+          TARGET_BRANCH: ${{ github.base_ref || github.event.pull_request.base.ref }}
+          SOURCE_BRANCH: ${{ github.head_ref || github.event.pull_request.head.ref }}
+        run: |
+          echo "Verifying pull request authorization..."
+          echo "Target branch: ${TARGET_BRANCH}"
+          echo "Source branch: ${SOURCE_BRANCH}"
+          echo "PR Number: ${PR_NUMBER}"
+          echo "PR Author: ${PR_AUTHOR}"
+          echo "Trigger Actor: ${ACTOR}"
+          echo "Source Repository: ${HEAD_REPO}"
+
+          # 1. External Fork Isolation Gate
+          if [ "${IS_FORK}" = "true" ]; then
+            if [ "${TARGET_BRANCH}" = "main" ] || [ "${TARGET_BRANCH}" = "staging" ]; then
+              echo "Error: Pull requests from external forks cannot target '${TARGET_BRANCH}'."
+              echo "External contributions must target 'dev' and require internal code owner approval."
+              exit 1
+            fi
+          fi
+
+          # 2. Strict Branch Promotion Hierarchy and Green-Check Gate
+          if [ "${TARGET_BRANCH}" = "main" ]; then
+            if [ "${SOURCE_BRANCH}" != "staging" ] && [[ "${SOURCE_BRANCH}" != hotfix/* ]]; then
+              echo "Error: Branch promotion violation. Only 'staging' or authorized 'hotfix/*' branches may merge into 'main'."
+              echo "Received source branch: ${SOURCE_BRANCH}"
+              exit 1
+            fi
+            echo "Promotion to 'main' verified: source branch is '${SOURCE_BRANCH}'."
+          fi
+
+          if [ "${TARGET_BRANCH}" = "staging" ]; then
+            if [ "${SOURCE_BRANCH}" != "dev" ] && [[ "${SOURCE_BRANCH}" != hotfix/* ]]; then
+              echo "Error: Branch promotion violation. Only 'dev' or authorized 'hotfix/*' branches may merge into 'staging'."
+              echo "Received source branch: ${SOURCE_BRANCH}"
+              exit 1
+            fi
+            echo "Promotion to 'staging' verified: source branch is '${SOURCE_BRANCH}'."
+          fi
+
+          # For promotion PRs targeting staging or main, ensure all CI checks are green
+          if [ "${TARGET_BRANCH}" = "staging" ] || [ "${TARGET_BRANCH}" = "main" ]; then
+            echo "Verifying check runs on promotion head commit..."
+            SELF_EXCLUDED='(.name != "Verify Contributor and Branch Promotion" and .name != "Verify Environment Authorization Gate" and .name != "copilot-pull-request-reviewer" and .name != "Running Copilot Code Review" and .name != "Vercel Preview Comments")'
+            PENDING_RUNS=0
+            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              PENDING_RUNS=$(gh api repos/${BASE_REPO}/commits/${HEAD_SHA}/check-runs \
+                --jq "[.check_runs[] | select(${SELF_EXCLUDED} and (.status==\"queued\" or .status==\"in_progress\"))] | length" 2>/dev/null || echo "0")
+              if [ "${PENDING_RUNS}" -eq 0 ]; then
+                break
+              fi
+              echo "Waiting for ${PENDING_RUNS} check run(s) to finish (attempt ${attempt}/12)..."
+              sleep 10
+            done
+
+            FAILED_RUNS=$(gh api repos/${BASE_REPO}/commits/${HEAD_SHA}/check-runs \
+              --jq "[.check_runs[] | select(${SELF_EXCLUDED} and (.conclusion==\"failure\" or .conclusion==\"timed_out\" or .conclusion==\"cancelled\"))] | length" 2>/dev/null || echo "0")
+
+            if [ "${FAILED_RUNS}" -gt 0 ]; then
+              echo "BLOCKED: Promotion to '${TARGET_BRANCH}' rejected. One or more previous CI check runs failed."
+              echo "All checks must show green before moving from dev to staging, and from staging to main."
+              exit 1
+            elif [ "${PENDING_RUNS}" -gt 0 ]; then
+              echo "BLOCKED: Promotion to '${TARGET_BRANCH}' rejected. Required CI checks are still running or queued (${PENDING_RUNS} pending)."
+              exit 1
+            else
+              echo "Promotion check verified: zero failing or pending check runs on '${HEAD_SHA}'."
+            fi
+          fi
+
+          # 3. Internal Contributor Authorization and Approval Gate
+          AUTHORIZED_CONTRIBUTORS="EleanorNabaloga MarkDanielsMCraft"
+          IS_INTERNAL_AUTHOR=false
+
+          for contributor in ${AUTHORIZED_CONTRIBUTORS}; do
+            if [ "${PR_AUTHOR}" = "${contributor}" ]; then
+              IS_INTERNAL_AUTHOR=true
+              break
+            fi
+          done
+
+          if [ "${IS_INTERNAL_AUTHOR}" = "true" ]; then
+            echo "Success: Pull request authored by internal maintainer '${PR_AUTHOR}'."
+          else
+            echo "Notice: Pull request #${PR_NUMBER} is authored by '${PR_AUTHOR}' (external or automated contributor)."
+            echo "Checking for mandatory review approval from authorized internal maintainers..."
+
+            # Query approved reviews using GitHub API, selecting latest review state per reviewer
+            APPROVED_COUNT=$(gh api repos/${BASE_REPO}/pulls/${PR_NUMBER}/reviews \
+              --jq 'group_by(.user.login) | map(last) | [.[] | select(.state=="APPROVED" and (.user.login=="EleanorNabaloga" or .user.login=="MarkDanielsMCraft"))] | length' 2>/dev/null || echo "0")
+
+            if [ "${APPROVED_COUNT}" -le 0 ]; then
+              echo "BLOCKED: Pull request #${PR_NUMBER} has not received an approved review from an authorized internal maintainer."
+              echo "Required reviewers: EleanorNabaloga, MarkDanielsMCraft."
+              echo "External contributors cannot merge pull requests without internal maintainer approval."
+              exit 1
+            else
+              echo "Success: Pull request #${PR_NUMBER} approved by authorized internal maintainer (${APPROVED_COUNT} approved review(s))."
+            fi
+          fi
+
+  verify-environment-authorization:
+    name: Verify Environment Authorization Gate
+    needs: [verify-authorization]
+    if: contains(fromJSON('["dev", "staging", "main"]'), github.base_ref || github.event.pull_request.base.ref)
+    runs-on: ubuntu-latest
+    environment: ${{ (github.base_ref || github.event.pull_request.base.ref) == 'main' && 'production' || ((github.base_ref || github.event.pull_request.base.ref) == 'staging' && 'staging' || 'development') }}
+    steps:
+      - name: Confirm Environment Authorization
+        run: |
+          TARGET="${{ github.base_ref || github.event.pull_request.base.ref }}"
+          echo "Target branch: ${TARGET}"
+          echo "Environment clearance confirmed for target environment."
+          echo "Only authorized environment reviewers can clear this gate."
