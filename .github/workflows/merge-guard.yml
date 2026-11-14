@@ -68,7 +68,7 @@ jobs:
           # For promotion PRs targeting staging or main, ensure all CI checks are green
           if [ "${TARGET_BRANCH}" = "staging" ] || [ "${TARGET_BRANCH}" = "main" ]; then
             echo "Verifying check runs on promotion head commit..."
-            SELF_EXCLUDED='.name != "Verify Contributor and Branch Promotion" and .name != "Verify Environment Authorization Gate"'
+            SELF_EXCLUDED='(.name != "Verify Contributor and Branch Promotion" and .name != "Verify Environment Authorization Gate" and .name != "copilot-pull-request-reviewer" and .name != "Running Copilot Code Review" and .name != "Vercel Preview Comments")'
             PENDING_RUNS=0
             for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
               PENDING_RUNS=$(gh api repos/${BASE_REPO}/commits/${HEAD_SHA}/check-runs \
