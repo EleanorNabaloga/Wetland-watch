@@ -29,10 +29,13 @@ jobs:
         id: versioning
         run: |
           # Fetch all git tags
-          git fetch --tags
+          git fetch --tags --force
 
-          # Get latest tag or default to v0.1.0
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+          # Get latest tag using semantic version sort across all tags
+          LATEST_TAG=$(git tag -l "v[0-9]*.[0-9]*.[0-9]*" | sort -V | tail -n 1)
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG="v0.1.0"
+          fi
           echo "Current latest tag: ${LATEST_TAG}"
 
           # Extract major, minor, patch numbers
@@ -54,6 +57,11 @@ jobs:
           else
             PATCH=$((PATCH + 1))
           fi
+
+          # Avoid collision with any existing tag
+          while git rev-parse -q --verify "refs/tags/v${MAJOR}.${MINOR}.${PATCH}" >/dev/null; do
+            PATCH=$((PATCH + 1))
+          done
 
           NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
           echo "Computed new version: ${NEW_VERSION}"
@@ -77,8 +85,8 @@ jobs:
           # Commit updated package version
           git add package.json package-lock.json 2>/dev/null || git add package.json
           git commit -m "chore(release): ${TAG_NAME}" || true
-          git tag "${TAG_NAME}"
-          git push origin "${TAG_NAME}"
+          git tag "${TAG_NAME}" || git tag -f "${TAG_NAME}"
+          git push origin "${TAG_NAME}" --force
 
           # Generate release notes and create release
           gh release create "${TAG_NAME}" \
