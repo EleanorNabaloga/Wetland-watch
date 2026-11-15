@@ -8,6 +8,7 @@ process.env.PHONE_FINGERPRINT_KEY = TEST_KEY;
 
 test("normalizePhone standardizes Ugandan numbers", () => {
   assert.equal(normalizePhone("0772123456"), "256772123456");
+  assert.equal(normalizePhone("772123456"), "256772123456");
   assert.equal(normalizePhone("+256772123456"), "256772123456");
   assert.equal(normalizePhone("256772123456"), "256772123456");
   assert.equal(normalizePhone("077-212-3456"), "256772123456");
