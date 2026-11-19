@@ -13,6 +13,12 @@ import {
 } from "@/lib/offline";
 import { signEvidence } from "@/lib/device";
 import { sanitizeNote } from "@/lib/sanitize";
+import {
+  getMine,
+  addMine,
+  removeMine,
+  tokenFor,
+} from "@/lib/reporterStorage";
 
 // Covers both wet and dry land: streets, slums, markets, wetlands, rivers, forests.
 // "value" is saved in English for NEMA (must match TYPES in lib/db.js); "key" is the label shown.
@@ -26,26 +32,7 @@ const TYPES = [
   { value: "Cutting trees or vegetation", key: "type.trees" },
   { value: "Other", key: "type.other" },
 ];
-const MINE_KEY = "ww_mine";
 const JSON_HEADERS = { "Content-Type": "application/json" };
-
-const getMine = () => {
-  try {
-    const items = JSON.parse(localStorage.getItem(MINE_KEY)) || [];
-    return items.filter(
-      (item) =>
-        item && typeof item.id === "string" && typeof item.token === "string",
-    );
-  } catch {
-    return [];
-  }
-};
-const addMine = (report) =>
-  localStorage.setItem(
-    MINE_KEY,
-    JSON.stringify([...getMine(), { id: report.id, token: report.token }]),
-  );
-const tokenFor = (id) => getMine().find((item) => item.id === id)?.token;
 
 // GPS state is kept as a kind plus data, and turned into words at render time,
 // so the text follows the chosen language.
@@ -122,6 +109,7 @@ export default function Reporter() {
   const [current, setCurrent] = useState(null);
   const [phone, setPhone] = useState("");
   const [panicked, setPanicked] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(false);
 
   const watchId = useRef(null);
   const timer = useRef(null);
@@ -135,19 +123,14 @@ export default function Reporter() {
     watchId.current = null;
   }, []);
 
+  // Hide only switches what is shown on screen to the farming-tips decoy.
+  // Saved report tokens and the offline queue stay intact so reporters can
+  // still check review updates and claim rewards when they return.
   const handlePanic = useCallback(() => {
     stopGps();
-    setPhoto(null);
-    setPhotoMeta(null);
-    setNote("");
-    setType("");
-    setMine([]);
-    setCurrent(null);
-    setView("home");
+    setGps((g) => (g.kind === "wait" ? { state: "bad", kind: "fail", retry: true } : g));
+    setConfirmRemove(false);
     setPanicked(true);
-    try {
-      localStorage.removeItem(MINE_KEY);
-    } catch {}
   }, [stopGps]);
 
   const startGps = useCallback(
@@ -218,6 +201,7 @@ export default function Reporter() {
   }, []);
 
   useEffect(() => {
+    if (panicked) return;
     const tick = () => {
       if (view === "home") refreshMine();
       if (view === "status" && openId) refreshCurrent(openId);
@@ -225,7 +209,7 @@ export default function Reporter() {
     tick();
     const t = setInterval(tick, 3000);
     return () => clearInterval(t);
-  }, [view, openId, refreshMine, refreshCurrent]);
+  }, [panicked, view, openId, refreshMine, refreshCurrent]);
 
   /* ---------- Actions ---------- */
   async function onPhoto(e, source) {
@@ -333,6 +317,8 @@ export default function Reporter() {
 
       const r = result;
       addMine(r);
+      setConfirmRemove(false);
+      setPhone("");
       setOpenId(r.id);
       setCurrent(r);
       setView("status");
@@ -361,9 +347,25 @@ export default function Reporter() {
   }
 
   function openReport(id) {
+    setConfirmRemove(false);
+    setPhone("");
     setOpenId(id);
     setCurrent(mine.find((r) => r.id === id) || null);
     setView("status");
+  }
+
+  // Permanently clears local access to one report on this device only.
+  // The report stays on the NEMA server, and other reports on this phone are untouched.
+  function handleRemoveFromDevice() {
+    if (!current) return;
+    const id = current.id;
+    removeMine(id);
+    setMine((prev) => prev.filter((item) => item.id !== id));
+    setConfirmRemove(false);
+    setOpenId(null);
+    setCurrent(null);
+    setPhone("");
+    setView("home");
   }
 
   /* ---------- Background Offline Sync ---------- */
@@ -425,20 +427,18 @@ export default function Reporter() {
     return (
       <main className="app">
         <header className="bar">
-          <span className="logo">Daily Farming Tips</span>
+          <span className="logo">{t("decoy.brand")}</span>
           <button
             type="button"
             className="ghost"
             onClick={() => setPanicked(false)}
           >
-            Home
+            {t("decoy.return")}
           </button>
         </header>
         <div className="decoy-card">
-          <h2>Seasonal Farming Tips</h2>
-          <p>
-            Clear water ditches when it rains heavily to stop flooding. Protect garden soil so food crops grow well.
-          </p>
+          <h2>{t("decoy.heading")}</h2>
+          <p>{t("decoy.body")}</p>
         </div>
       </main>
     );
@@ -453,9 +453,9 @@ export default function Reporter() {
             type="button"
             className="panic-btn"
             onClick={handlePanic}
-            title="Panic: hide screen immediately"
+            title={t("hide.title")}
           >
-            Hide
+            {t("hide.btn")}
           </button>
           <LanguagePicker />
         </div>
@@ -658,7 +658,10 @@ export default function Reporter() {
           <button
             type="button"
             className="back"
-            onClick={() => setView("home")}
+            onClick={() => {
+              setConfirmRemove(false);
+              setView("home");
+            }}
           >
             {t("back.home")}
           </button>
@@ -715,6 +718,37 @@ export default function Reporter() {
               )}
             </div>
           )}
+          <div className="remove-zone">
+            {!confirmRemove ? (
+              <button
+                type="button"
+                className="ghost remove-btn"
+                onClick={() => setConfirmRemove(true)}
+              >
+                {t("remove.btn")}
+              </button>
+            ) : (
+              <div className="remove-confirm" role="alert">
+                <p>{t("remove.warn")}</p>
+                <div className="remove-actions">
+                  <button
+                    type="button"
+                    className="panic-btn"
+                    onClick={handleRemoveFromDevice}
+                  >
+                    {t("remove.confirm")}
+                  </button>
+                  <button
+                    type="button"
+                    className="ghost"
+                    onClick={() => setConfirmRemove(false)}
+                  >
+                    {t("remove.cancel")}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </section>
       )}
     </main>
