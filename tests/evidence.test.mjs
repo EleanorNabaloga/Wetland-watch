@@ -97,3 +97,37 @@ test("no signature is unsigned; garbage is invalid", async () => {
   assert.equal(await verifyEvidence({ ...base, signature: "abc", publicKey: "not base64!" }), "invalid");
   assert.equal(await verifyEvidence({ ...base, signature: "AAAA", publicKey: "AAAA" }), "invalid");
 });
+
+test("preserving exact coordinates keeps post-storage verification valid while 3-decimal rounding breaks it", async () => {
+  const key = await newKey();
+  const s = await signLikePhone(
+    [base.photo, base.lat, base.lng, base.acc, base.ts],
+    key,
+  );
+  // Exact stored coordinates re-verify cleanly
+  assert.equal(
+    await verifyEvidence({
+      photo: base.photo,
+      lat: base.lat,
+      lng: base.lng,
+      acc: base.acc,
+      ts: base.ts,
+      ...s,
+    }),
+    "verified",
+  );
+  // Rounding to 3 decimal places (~111m) invalidates the signed evidence
+  const roundedLat = Math.round(base.lat * 1000) / 1000;
+  const roundedLng = Math.round(base.lng * 1000) / 1000;
+  assert.equal(
+    await verifyEvidence({
+      photo: base.photo,
+      lat: roundedLat,
+      lng: roundedLng,
+      acc: base.acc,
+      ts: base.ts,
+      ...s,
+    }),
+    "invalid",
+  );
+});
