@@ -113,3 +113,8 @@ textarea{width:100%;margin-top:.8rem;padding:.7rem .8rem;border:1.5px solid var(
 .decoy-card{padding:1.2rem;background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);margin:1.2rem 0}
 .decoy-card h2{margin:0 0 .4rem;color:var(--ink);font-size:1.15rem}
 .decoy-card p{color:var(--muted);line-height:1.5}
+.remove-zone{margin-top:1.6rem;padding-top:1.2rem;border-top:1px solid var(--line)}
+.remove-btn{color:var(--bad);border-color:var(--bad)}
+.remove-confirm{padding:1rem;border-radius:var(--r);background:var(--bad-bg);border:1.5px solid var(--bad);color:var(--bad)}
+.remove-confirm p{font-size:.92rem;line-height:1.45}
+.remove-actions{display:flex;gap:.6rem;margin-top:.8rem;flex-wrap:wrap}
